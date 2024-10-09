@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <iomanip>
+#include <ranges>
 
 ParkingLot::ParkingLot(std::string_view n) : name(n) {}
 
@@ -10,11 +11,15 @@ void ParkingLot::addCar(std::unique_ptr<Car> car) {
 }
 
 void ParkingLot::removeCar(std::string_view licensePlate) {
-    auto it = std::remove_if(cars.begin(), cars.end(), [&](const auto& car) {
+    // Используем std::ranges::remove_if для удаления машины с указанным номером
+    auto range = std::ranges::remove_if(cars, [&](const auto& car) {
         return car->getLicensePlate() == licensePlate;
     });
-    if (it != cars.end()) {
-        cars.erase(it, cars.end());
+
+    // Удаляем элементы из диапазона
+    cars.erase(range.begin(), range.end());
+
+    if (range.begin() != cars.end()) {
         std::cout << "Машина с номерным знаком " << licensePlate << " удалена." << std::endl;
     } else {
         std::cout << "Машина не найдена." << std::endl;
