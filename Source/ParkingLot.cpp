@@ -39,11 +39,16 @@ void ParkingLot::addParkingSpot(std::unique_ptr<ParkingSpot> spot) {
 }
 
 void ParkingLot::removeParkingSpot(int spotNumber) {
-    auto it = std::remove_if(spots.begin(), spots.end(), [&](const auto& spot) {
+    // Используем std::ranges::remove_if для удаления парковочного места с указанным номером
+    auto range = std::ranges::remove_if(spots, [&](const std::unique_ptr<ParkingSpot>& spot) {
         return spot->getNumber() == spotNumber;
     });
-    if (it != spots.end()) {
-        spots.erase(it, spots.end());
+
+    // Удаляем элементы из контейнера spots, используя возвращенный диапазон
+    spots.erase(range.begin(), range.end());
+
+    // Проверяем, было ли что-то удалено
+    if (range.begin() != spots.end()) {
         std::cout << "Парковочное место " << spotNumber << " удалено." << std::endl;
     } else {
         std::cout << "Парковочное место не найдено." << std::endl;
