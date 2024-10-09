@@ -10,13 +10,12 @@ void ParkingLot::addCar(std::unique_ptr<Car> car) {
     cars.push_back(std::move(car));
 }
 
+
 void ParkingLot::removeCar(std::string_view licensePlate) {
-    // Используем std::ranges::remove_if для удаления машины с указанным номером
-    auto range = std::ranges::remove_if(cars, [&](const auto& car) {
+    auto range = std::ranges::remove_if(cars, [&](const std::unique_ptr<Car>& car) {
         return car->getLicensePlate() == licensePlate;
     });
 
-    // Удаляем элементы из диапазона
     cars.erase(range.begin(), range.end());
 
     if (range.begin() != cars.end()) {
