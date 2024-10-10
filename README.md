@@ -1,4 +1,4 @@
-<h1 style="font-family: 'Academy Engraved LET', sans-serif; font-size: 2.5em; font-weight: bold;">Parking Management System</h1>
+<h1 style="font-family: 'Academy Engraved LET', sans-serif; font-size: 2.5em; font-weight: bold;">Parking System</h1>
 
 <p style="font-size: 1.2em;">Проект представляет собой систему управления парковкой, позволяющую добавлять и управлять автомобилями и парковочными местами. Приложение разработано на C++ и поддерживает функционал взаимодействия с пользователями через консольное меню.</p>
 
