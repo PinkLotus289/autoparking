@@ -13,7 +13,7 @@ public:
     std::string getSize() const;
     bool isOccupied() const;
     
-    void displayParkingSpot(bool isAdmin) const;
+    void displayParkingSpot() const;
     void setOccupied(bool isOccupied);
 
     void assignCar(std::shared_ptr<Car> car);
