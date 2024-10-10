@@ -3,7 +3,7 @@
 #include <iomanip>
 
 ParkingSpot::ParkingSpot(int num, std::string_view sz, bool isOccupied)
-    : number(num), size(sz), occupied(isOccupied), car(nullptr) {}
+    : number(num), size(sz), occupied(isOccupied) {}
 
 int ParkingSpot::getNumber() const { return number; }
 std::string ParkingSpot::getSize() const { return size; }
@@ -32,16 +32,15 @@ std::shared_ptr<Car> ParkingSpot::getCar() const {
 
 void ParkingSpot::displayParkingSpot(bool isAdmin) const {
     std::cout << std::left << std::setw(10) << number 
-              << std::setw(28) << size 
-              << std::setw(25) << (occupied ? "Занято" : "Свободно")
+              << std::setw(20) << size 
+              << std::setw(15) << (occupied ? "Занято" : "Свободно")
               << std::setw(20);
 
     if (occupied && car) {
         std::cout << car->getLicensePlate();
     } else {
-        std::cout << "-";
+        std::cout << "Свободно";
     }
 
     std::cout << std::endl;
 }
-
