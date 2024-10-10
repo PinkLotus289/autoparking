@@ -16,8 +16,8 @@ void ParkingSpot::setOccupied(bool isOccupied) {
     }
 }
 
-void ParkingSpot::assignCar(std::shared_ptr<Car> car) {
-    this->car = car;
+void ParkingSpot::assignCar(std::shared_ptr<Car> newCar) {
+    car = newCar;  // Присваиваем параметр полю класса
     occupied = true;
 }
 
