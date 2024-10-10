@@ -12,6 +12,7 @@ public:
     std::string getLicensePlate() const;
     void setParked(bool parked);  // Метод для обновления статуса запаркованности
     void displayCar() const;
+    bool isParked() const; 
 
 private:
     std::string model;
