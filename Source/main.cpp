@@ -12,6 +12,8 @@ void displayMenu() {
     cout << "4. Удалить парковочное место" << endl;
     cout << "5. Выход" << endl;
     cout << "6. Внести информацию о парковочном месте" << endl;
+    cout << "7. Запарковать автомобиль" << endl;
+    cout << "8. Освободить парковочное место" << endl;
     cout << "Введите ваш выбор: ";
 }
 
@@ -21,11 +23,11 @@ int main() {
     auto parkingLot = make_unique<ParkingLot>("Центральная парковка");
 
     auto car1 = make_unique<Car>("Toyota", "А123ВС77");
-    auto car2 = make_unique<Car>("Tesla", "Х456УУ99", true);
+    auto car2 = make_unique<Car>("Tesla", "Х456УУ99");
     parkingLot->addCar(std::move(car1));
     parkingLot->addCar(std::move(car2));
 
-    auto spot1 = make_unique<ParkingSpot>(101, "Компактное", true);
+    auto spot1 = make_unique<ParkingSpot>(101, "Компактное", false);
     auto spot2 = make_unique<ParkingSpot>(202, "Большое", false);
     parkingLot->addParkingSpot(std::move(spot1));
     parkingLot->addParkingSpot(std::move(spot2));
@@ -64,7 +66,7 @@ int main() {
             case 5:
                 running = false;
                 break;
-            case 6: { // Новый пункт меню для добавления парковочного места
+            case 6: { 
                 cout << "\nВведите номер парковочного места: ";
                 int number;
                 cin >> number;
@@ -83,6 +85,26 @@ int main() {
                 parkingLot->addParkingSpot(std::move(newSpot));
 
                 cout << "Парковочное место добавлено!" << endl;
+                break;
+            } case 7: {
+                std::cout << "\nВведите номерной знак машины для закрепления: ";
+                std::string licensePlate;
+                std::getline(std::cin, licensePlate);
+
+                std::cout << "Введите номер парковочного места: ";
+                int spotNumber;
+                std::cin >> spotNumber;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+                parkingLot->assignCarToSpot(licensePlate, spotNumber);
+                break;
+            } case 8: {
+                std::cout << "\nВведите номер парковочного места для освобождения: ";
+                int spotNumber;
+                std::cin >> spotNumber;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+                parkingLot->releaseParkingSpot(spotNumber);
                 break;
             }
             default:
