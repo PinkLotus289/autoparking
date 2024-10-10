@@ -110,8 +110,7 @@ void ParkingLot::releaseParkingSpot(int spotNumber) {
     ParkingSpot* spot = getParkingSpot(spotNumber);
 
     if (spot && spot->isOccupied()) {
-        std::shared_ptr<Car> car = spot->getCar();
-        if (car) {
+        if (std::shared_ptr<Car> car = spot->getCar(); car) {  // Используем init-statement
             car->setParked(false);  // Устанавливаем статус как "Не запаркован"
         }
         spot->removeCar();
