@@ -15,7 +15,6 @@ bool Car::isParked() const {
     return parked; 
 }
 
-
 void Car::displayCar() const {
     std::cout << std::left << std::setw(25) << model 
               << std::left << std::setw(50) << licensePlate 

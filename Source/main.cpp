@@ -10,10 +10,10 @@ void displayMenu() {
     cout << "2. Отобразить информацию о парковке (администратор)" << endl;
     cout << "3. Удалить машину" << endl;
     cout << "4. Удалить парковочное место" << endl;
-    cout << "5. Выход" << endl;
-    cout << "6. Внести информацию о парковочном месте" << endl;
-    cout << "7. Запарковать автомобиль" << endl;
-    cout << "8. Освободить парковочное место" << endl;
+    cout << "5. Внести информацию о парковочном месте" << endl;
+    cout << "6. Запарковать автомобиль" << endl;
+    cout << "7. Освободить парковочное место" << endl;
+    cout << "8. Выход" << endl;
     cout << "Введите ваш выбор: ";
 }
 
@@ -28,7 +28,7 @@ int main() {
     parkingLot->addCar(std::move(car2));
 
     auto spot1 = make_unique<ParkingSpot>(101, "Компактное", false);
-    auto spot2 = make_unique<ParkingSpot>(202, "Большое   ", false);
+    auto spot2 = make_unique<ParkingSpot>(202, "Большое", false);
     parkingLot->addParkingSpot(std::move(spot1));
     parkingLot->addParkingSpot(std::move(spot2));
 
@@ -63,10 +63,7 @@ int main() {
                 parkingLot->removeParkingSpot(spotNumber);
                 break;
             }
-            case 5:
-                running = false;
-                break;
-            case 6: { 
+            case 5: { 
                 cout << "\nВведите номер парковочного места: ";
                 int number;
                 cin >> number;
@@ -86,7 +83,7 @@ int main() {
 
                 cout << "Парковочное место добавлено!" << endl;
                 break;
-            } case 7: {
+            } case 6: {
                 std::cout << "\nВведите номерной знак машины для закрепления: ";
                 std::string licensePlate;
                 std::getline(std::cin, licensePlate);
@@ -98,7 +95,7 @@ int main() {
 
                 parkingLot->assignCarToSpot(licensePlate, spotNumber);
                 break;
-            } case 8: {
+            } case 7: {
                 std::cout << "\nВведите номер парковочного места для освобождения: ";
                 int spotNumber;
                 std::cin >> spotNumber;
@@ -106,6 +103,19 @@ int main() {
 
                 parkingLot->releaseParkingSpot(spotNumber);
                 break;
+            }
+            case 8:
+                running = false;
+                break;
+            case 9: {
+                cout << "\nВведите модель авто" << endl;
+                string model;
+                cin >> model;
+                cout << "\nВведите номерной знак авто" << endl;
+                string licensePlate;
+                cin >> licensePlate;
+                auto car = make_unique<Car>(model, licensePlate);
+                parkingLot->addCar(std::move(car));
             }
             default:
                 cout << "Неверный выбор, попробуйте снова." << endl;

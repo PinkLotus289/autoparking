@@ -4,7 +4,9 @@
 #include <iomanip>
 #include <ranges>
 
+
 ParkingLot::ParkingLot(std::string_view n) : name(n) {}
+
 
 void ParkingLot::addCar(std::shared_ptr<Car> car) {
     cars.push_back(std::move(car));
@@ -31,9 +33,11 @@ std::shared_ptr<Car> ParkingLot::getCar(std::string_view licensePlate) {
     return nullptr;
 }
 
+
 void ParkingLot::addParkingSpot(std::shared_ptr<ParkingSpot> spot) {
     spots.push_back(std::move(spot));
 }
+
 
 void ParkingLot::removeParkingSpot(int spotNumber) {
     auto range = std::ranges::remove_if(spots, [&](const std::shared_ptr<ParkingSpot>& spot) {
