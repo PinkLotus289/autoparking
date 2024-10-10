@@ -2,18 +2,21 @@
 #define CAR_HPP
 
 #include <string>
+#include <iostream>
 
 class Car {
 public:
-    Car(std::string_view brand, std::string_view licensePlate, bool reserved = false);
+    Car(std::string model, std::string licensePlate);
 
-    std::string_view getLicensePlate() const;
+    std::string getModel() const;
+    std::string getLicensePlate() const;
+    void setParked(bool parked);  // Новый метод для обновления статуса запаркованности
     void displayCar() const;
 
 private:
-    std::string brand;
+    std::string model;
     std::string licensePlate;
-    bool reserved;
+    bool parked;  // Переменная состояния запаркованности
 };
 
 #endif // CAR_HPP
