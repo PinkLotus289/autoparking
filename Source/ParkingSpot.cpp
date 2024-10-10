@@ -30,9 +30,9 @@ std::shared_ptr<Car> ParkingSpot::getCar() const {
     return car;
 }
 
-void ParkingSpot::displayParkingSpot(bool isAdmin) const {
-    std::cout << std::left << std::setw(10) << number 
-              << std::setw(20) << size 
+void ParkingSpot::displayParkingSpot() const {
+    std::cout << std::left << std::setw(10) << number
+              << std::setw(20) << size
               << std::setw(15) << (occupied ? "Занято" : "Свободно")
               << std::setw(20);
 

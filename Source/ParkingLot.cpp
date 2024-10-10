@@ -100,7 +100,7 @@ void ParkingLot::displayParkingLot(bool isAdmin) const {
 
     for (const auto& spot : spots) {
         if (isAdmin || !spot->isOccupied()) {
-            spot->displayParkingSpot(isAdmin);
+            spot->displayParkingSpot(); // Убрали аргумент isAdmin
         }
     }
 }
