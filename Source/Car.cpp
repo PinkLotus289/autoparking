@@ -3,8 +3,8 @@
 #include <iomanip>
 
 
-Car::Car(std::string mdl, std::string lp) 
-    : model(std::move(mdl)), licensePlate(std::move(lp)), parked(false) {}
+Car::Car(std::string mdl, std::string lp)
+    : model(std::move(mdl)), licensePlate(std::move(lp)) {}
 
 std::string Car::getModel() const { return model; }
 std::string Car::getLicensePlate() const { return licensePlate; }
