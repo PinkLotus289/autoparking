@@ -28,7 +28,7 @@ int main() {
     parkingLot->addCar(std::move(car2));
 
     auto spot1 = make_unique<ParkingSpot>(101, "Компактное", false);
-    auto spot2 = make_unique<ParkingSpot>(202, "Большое", false);
+    auto spot2 = make_unique<ParkingSpot>(202, "Большое   ", false);
     parkingLot->addParkingSpot(std::move(spot1));
     parkingLot->addParkingSpot(std::move(spot2));
 

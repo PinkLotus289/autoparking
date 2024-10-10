@@ -11,9 +11,14 @@ std::string Car::getLicensePlate() const { return licensePlate; }
 
 void Car::setParked(bool p) { parked = p; }
 
+bool Car::isParked() const { 
+    return parked; 
+}
+
+
 void Car::displayCar() const {
     std::cout << std::left << std::setw(25) << model 
-              << std::setw(29) << licensePlate 
-              << std::setw(30) << (parked ? "Запаркован" : "Не запаркован")
+              << std::left << std::setw(50) << licensePlate 
+              << std::right << std::setw(30) << (parked ? "Запаркован" : "Не запаркован")
               << std::endl;
 }

@@ -32,14 +32,14 @@ std::shared_ptr<Car> ParkingSpot::getCar() const {
 
 void ParkingSpot::displayParkingSpot() const {
     std::cout << std::left << std::setw(10) << number
-              << std::setw(20) << size
-              << std::setw(15) << (occupied ? "Занято" : "Свободно")
-              << std::setw(20);
+              << std::left << std::setw(30) << size
+              << std::left << std::setw(30) << (occupied ? "Занято" : "Свободно")
+              << std::left << std::setw(30);
 
     if (occupied && car) {
-        std::cout << car->getLicensePlate();
+        std::cout << std::left << car->getLicensePlate();
     } else {
-        std::cout << "Свободно";
+        std::cout << std::left << "Свободно";
     }
 
     std::cout << std::endl;

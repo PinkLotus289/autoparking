@@ -72,37 +72,53 @@ void ParkingLot::assignCarToSpot(std::string_view licensePlate, int spotNumber) 
 }
 
 void ParkingLot::displayParkingLot(bool isAdmin) const {
-    std::cout << "Парковка: " << name << std::endl;
+    std::cout << "\nИнформация для " << (isAdmin ? "администратора:" : "пользователя:") << "\n";
+    std::cout << "\n=== Информация о парковке ===\n";
+    std::cout << "Парковка: " << name << "\n";
 
     // Вывод таблицы для машин только для администратора
     if (isAdmin) {
-        std::cout << "Машины на парковке:" << std::endl;
-        std::cout << std::left 
-                  << std::setw(25) << "Марка"
-                  << std::setw(29) << "Номерной знак" 
-                  << std::setw(30) << "Статус" 
+        std::cout << "\nМашины на парковке:\n";
+        std::cout << std::left << std::setw(20) << "Марка"
+                  << std::left << std::setw(34) << "Номерной знак" 
+                  << std::left << std::setw(30) << "Статус" 
                   << std::endl;
-        std::cout << std::string(90, '-') << std::endl;
+        std::cout << std::string(60, '-') << std::endl;
 
         for (const auto& car : cars) {
-            car->displayCar();
+            std::cout << std::left 
+                      << std::setw(15) << car->getModel()
+                      << std::setw(25) << car->getLicensePlate()
+                      << std::setw(30) << (car->isParked() ? "Запаркован" : "Не запаркован")
+                      << std::endl;
         }
     }
 
     // Вывод таблицы для парковочных мест
-    std::cout << "\nПарковочные места:" << std::endl;
-    std::cout << std::left 
-              << std::setw(25) << "Номер"
-              << std::setw(24) << "Размер"
-              << std::setw(25) << "Занятость"
-              << std::setw(20) << "Кем занято" << std::endl;
-    std::cout << std::string(90, '-') << std::endl;
+    std::cout << "\nПарковочные места:\n";
+    std::cout << std::left << std::setw(15) << "Номер"
+              << std::left << std::setw(25) << "Размер"
+              << std::left << std::setw(25) << "Занятость"
+              << std::left << std::setw(20) << "Кем занято" << std::endl;
+    std::cout << std::string(60, '-') << std::endl;
 
     for (const auto& spot : spots) {
+        // Если администратор, отображаем все места, иначе только свободные
         if (isAdmin || !spot->isOccupied()) {
-            spot->displayParkingSpot(); // Убрали аргумент isAdmin
+            std::cout << std::left << std::setw(10) << spot->getNumber()
+                      << std::left << std::setw(29) << spot->getSize()
+                      << std::left << std::setw(25) << (spot->isOccupied() ? "Занято" : "Свободно");
+            
+            if (spot->isOccupied() && spot->getCar()) {
+                std::cout << std::left << std::setw(20) << spot->getCar()->getLicensePlate();
+            } else {
+                std::cout << std::left << std::setw(20) << "-";
+            }
+            std::cout << std::endl;
         }
     }
+
+    std::cout << std::string(60, '=') << "\n" << std::endl;
 }
 
 
@@ -119,4 +135,3 @@ void ParkingLot::releaseParkingSpot(int spotNumber) {
         std::cout << "Парковочное место либо не найдено, либо уже свободно." << std::endl;
     }
 }
-
