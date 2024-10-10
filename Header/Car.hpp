@@ -10,14 +10,13 @@ public:
 
     std::string getModel() const;
     std::string getLicensePlate() const;
-    void setParked(bool parked);  // Новый метод для обновления статуса запаркованности
+    void setParked(bool parked);  // Метод для обновления статуса запаркованности
     void displayCar() const;
 
 private:
     std::string model;
     std::string licensePlate;
-    bool parked;  // Переменная состояния запаркованности
+    bool parked = false;  // Инициализация переменной непосредственно в классе
 };
 
 #endif // CAR_HPP
-
