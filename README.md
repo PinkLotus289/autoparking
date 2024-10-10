@@ -72,4 +72,4 @@
 
 <h2 style="font-family: 'Academy Engraved LET', sans-serif; font-size: 2em; font-weight: bold;">Ссылка на SonarCloud</h2>
 
-<p style="font-size: 1.2em;"><a href="[https://sonarcloud.io/project/overview?id=kamat0shi_yaskevich_PonLHL](https://sonarcloud.io/project/overview?id=PinkLotus289_autoparking)">SonarCloud Overview</a></p>
+<p style="font-size: 1.2em;"><a href="https://sonarcloud.io/project/overview?id=PinkLotus289_autoparking">SonarCloud Overview</a></p>
