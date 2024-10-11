@@ -10,10 +10,11 @@ void displayMenu() {
     cout << "2. Отобразить информацию о парковке (администратор)" << endl;
     cout << "3. Удалить машину" << endl;
     cout << "4. Удалить парковочное место" << endl;
-    cout << "5. Внести информацию о парковочном месте" << endl;
-    cout << "6. Запарковать автомобиль" << endl;
-    cout << "7. Освободить парковочное место" << endl;
-    cout << "8. Выход" << endl;
+    cout << "5. Добавить новое авто" << endl;
+    cout << "6. Внести информацию о парковочном месте" << endl;
+    cout << "7. Запарковать автомобиль" << endl;
+    cout << "8. Освободить парковочное место" << endl;
+    cout << "9. Выход" << endl;
     cout << "Введите ваш выбор: ";
 }
 
@@ -41,14 +42,16 @@ int main() {
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         switch (choice) {
-            case 1:
+            case 1:{
                 cout << "\nИнформация для обычного пользователя:" << endl;
                 parkingLot->displayParkingLot(false);
                 break;
-            case 2:
+            }
+            case 2:{
                 cout << "\nИнформация для администратора:" << endl;
                 parkingLot->displayParkingLot(true);
                 break;
+            }
             case 3: {
                 cout << "\nВведите номерной знак машины для удаления: ";
                 string licensePlate;
@@ -63,7 +66,23 @@ int main() {
                 parkingLot->removeParkingSpot(spotNumber);
                 break;
             }
-            case 5: { 
+            case 5: {
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+                std::cout << "\nВведите модель авто: ";
+                std::string model;
+                std::getline(std::cin, model); 
+
+                std::cout << "Введите номерной знак авто: ";
+                std::string licensePlate;
+                std::getline(std::cin, licensePlate); 
+
+                auto car = std::make_shared<Car>(model, licensePlate);
+                parkingLot->addCar(car);
+                std::cout << "Автомобиль успешно добавлен!\n";
+                break;
+            }
+
+            case 6: { 
                 cout << "\nВведите номер парковочного места: ";
                 int number;
                 cin >> number;
@@ -83,7 +102,7 @@ int main() {
 
                 cout << "Парковочное место добавлено!" << endl;
                 break;
-            } case 6: {
+            } case 7: {
                 std::cout << "\nВведите номерной знак машины для закрепления: ";
                 std::string licensePlate;
                 std::getline(std::cin, licensePlate);
@@ -95,7 +114,7 @@ int main() {
 
                 parkingLot->assignCarToSpot(licensePlate, spotNumber);
                 break;
-            } case 7: {
+            } case 8: {
                 std::cout << "\nВведите номер парковочного места для освобождения: ";
                 int spotNumber;
                 std::cin >> spotNumber;
@@ -104,19 +123,9 @@ int main() {
                 parkingLot->releaseParkingSpot(spotNumber);
                 break;
             }
-            case 8:
+            case 9:
                 running = false;
                 break;
-            case 9: {
-                cout << "\nВведите модель авто" << endl;
-                string model;
-                cin >> model;
-                cout << "\nВведите номерной знак авто" << endl;
-                string licensePlate;
-                cin >> licensePlate;
-                auto car = make_unique<Car>(model, licensePlate);
-                parkingLot->addCar(std::move(car));
-            }
             default:
                 cout << "Неверный выбор, попробуйте снова." << endl;
                 break;

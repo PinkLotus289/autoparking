@@ -66,7 +66,7 @@ void ParkingLot::assignCarToSpot(std::string_view licensePlate, int spotNumber) 
 
     if (car && spot && !spot->isOccupied()) {
         spot->assignCar(car);
-        car->setParked(true);  // Устанавливаем статус запаркованности
+        car->setParked(true); 
         std::cout << "Машина с номером " << licensePlate << " закреплена за местом " << spotNumber << "." << std::endl;
     } else if (spot && spot->isOccupied()) {
         std::cout << "Парковочное место уже занято." << std::endl;
@@ -80,7 +80,7 @@ void ParkingLot::displayParkingLot(bool isAdmin) const {
     std::cout << "\n=== Информация о парковке ===\n";
     std::cout << "Парковка: " << name << "\n";
 
-    // Вывод таблицы для машин только для администратора
+    
     if (isAdmin) {
         std::cout << "\nМашины на парковке:\n";
         std::cout << std::left << std::setw(20) << "Марка"
@@ -98,7 +98,7 @@ void ParkingLot::displayParkingLot(bool isAdmin) const {
         }
     }
 
-    // Вывод таблицы для парковочных мест
+    
     std::cout << "\nПарковочные места:\n";
     std::cout << std::left << std::setw(15) << "Номер"
               << std::left << std::setw(25) << "Размер"
@@ -107,7 +107,6 @@ void ParkingLot::displayParkingLot(bool isAdmin) const {
     std::cout << std::string(60, '-') << std::endl;
 
     for (const auto& spot : spots) {
-        // Если администратор, отображаем все места, иначе только свободные
         if (isAdmin || !spot->isOccupied()) {
             std::cout << std::left << std::setw(10) << spot->getNumber()
                       << std::left << std::setw(29) << spot->getSize()
@@ -130,8 +129,8 @@ void ParkingLot::releaseParkingSpot(int spotNumber) {
     ParkingSpot* spot = getParkingSpot(spotNumber);
 
     if (spot && spot->isOccupied()) {
-        if (std::shared_ptr<Car> car = spot->getCar(); car) {  // Используем init-statement
-            car->setParked(false);  // Устанавливаем статус как "Не запаркован"
+        if (std::shared_ptr<Car> car = spot->getCar(); car) {  
+            car->setParked(false);  
         }
         spot->removeCar();
         std::cout << "Парковочное место " << spotNumber << " теперь свободно." << std::endl;
