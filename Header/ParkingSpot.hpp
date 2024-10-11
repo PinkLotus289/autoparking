@@ -24,7 +24,7 @@ private:
     int number;
     std::string size;
     bool occupied;
-    std::shared_ptr<Car> car = nullptr;  // Инициализация переменной car как nullptr прямо в объявлении
+    std::shared_ptr<Car> car = nullptr;
 };
 
-#endif // PARKINGSPOT_HPP
+#endif 

@@ -19,7 +19,7 @@ public:
     void removeParkingSpot(int spotNumber);
     ParkingSpot* getParkingSpot(int spotNumber);
 
-    void assignCarToSpot(std::string_view licensePlate, int spotNumber); // Объявление метода
+    void assignCarToSpot(std::string_view licensePlate, int spotNumber); 
     void displayParkingLot(bool isAdmin) const;
 
     void releaseParkingSpot(int spotNumber);
@@ -30,4 +30,4 @@ private:
     std::vector<std::shared_ptr<ParkingSpot>> spots;
 };
 
-#endif // PARKINGLOT_HPP
+#endif 
