@@ -18,7 +18,7 @@ void ParkingLot::loadCarsFromDatabase() {
     std::string query = "SELECT model, licensePlate, parked FROM Cars;";
     sqlite3_stmt* stmt;
 
-    if (sqlite3_prepare_v2(dbManager.getDB(), query.c_str(), -1, &stmt, NULL) == SQLITE_OK) {
+    if (sqlite3_prepare_v2(dbManager.getDB(), query.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             std::string model = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
             std::string licensePlate = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
@@ -39,7 +39,7 @@ void ParkingLot::loadParkingSpotsFromDatabase() {
     std::string query = "SELECT number, size, occupied, carId FROM ParkingSpots ORDER BY number ASC;";
     sqlite3_stmt* stmt;
 
-    if (sqlite3_prepare_v2(dbManager.getDB(), query.c_str(), -1, &stmt, NULL) == SQLITE_OK) {
+    if (sqlite3_prepare_v2(dbManager.getDB(), query.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             int number = sqlite3_column_int(stmt, 0);
             std::string size = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
