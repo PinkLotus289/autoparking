@@ -28,7 +28,7 @@ static std::string getLicensePlateById(const DatabaseManager& dbManager, int car
     return licensePlate;
 }
 
-std::shared_ptr<ParkingSpot> loadParkingSpot(sqlite3_stmt* stmt, ParkingLot& parkingLot, DatabaseManager& dbManager) {
+std::shared_ptr<ParkingSpot> loadParkingSpot(sqlite3_stmt* stmt, ParkingLot& parkingLot, const DatabaseManager& dbManager) {
     int number = sqlite3_column_int(stmt, 0);
     std::string size = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
     bool occupied = sqlite3_column_int(stmt, 2);
@@ -46,8 +46,6 @@ std::shared_ptr<ParkingSpot> loadParkingSpot(sqlite3_stmt* stmt, ParkingLot& par
 
     return spot;
 }
-
-
 
 
 void ParkingLot::loadCarsFromDatabase() {
@@ -85,7 +83,6 @@ void ParkingLot::loadParkingSpotsFromDatabase() {
 }
 
 
-
 void ParkingLot::createTables() {
     std::string createCarsTable = R"(
         CREATE TABLE IF NOT EXISTS Cars (
@@ -115,7 +112,7 @@ void ParkingLot::addCar(std::shared_ptr<Car> car) {
     sqlite3_stmt* stmt;
     int count = 0;
     
-    if (sqlite3_prepare_v2(dbManager.getDB(), checkQuery.c_str(), -1, &stmt, NULL) == SQLITE_OK) {
+    if (sqlite3_prepare_v2(dbManager.getDB(), checkQuery.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
         if (sqlite3_step(stmt) == SQLITE_ROW) {
             count = sqlite3_column_int(stmt, 0);
         }
@@ -152,7 +149,7 @@ std::shared_ptr<Car> ParkingLot::getCar(std::string_view licensePlate) {
     // Запрос к базе данных и создание объекта Car
     std::string query = "SELECT model, parked FROM Cars WHERE licensePlate = '" + std::string(licensePlate) + "';";
     sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(dbManager.getDB(), query.c_str(), -1, &stmt, NULL);
+    sqlite3_prepare_v2(dbManager.getDB(), query.c_str(), -1, &stmt, nullptr);
 
     std::shared_ptr<Car> car = nullptr;
     if (sqlite3_step(stmt) == SQLITE_ROW) {
