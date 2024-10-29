@@ -343,8 +343,8 @@ double calculateFreeSpotPercentage(const ParkingLot& lot) {
 }
 
 ParkingLot& ParkingLot::operator+=(std::shared_ptr<ParkingSpot> spot) {
-    DatabaseManager dbManager("parking_lot.db");  // Создаем объект для работы с БД
-    addParkingSpot(spot, dbManager);  // Вызываем существующую функцию добавления места
+    // Используем уже существующий dbManager для добавления парковочного места в базу данных
+    addParkingSpot(spot, dbManager);
     return *this;
 }
 
