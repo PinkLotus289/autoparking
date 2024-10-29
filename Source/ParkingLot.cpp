@@ -108,7 +108,7 @@ void ParkingLot::createTables() {
 
 void ParkingLot::addCar(std::shared_ptr<Car> car) {
     // Проверяем, существует ли машина с таким номером в базе данных
-    std::string checkQuery = "SELECT COUNT(*) FROM Cars WHERE licensePlate = '" + car->getLicensePlate() + "';";
+    std::string checkQuery = std::format("SELECT COUNT(*) FROM Cars WHERE licensePlate = '{}';", car->getLicensePlate());
     sqlite3_stmt* stmt;
     int count = 0;
 
@@ -120,17 +120,14 @@ void ParkingLot::addCar(std::shared_ptr<Car> car) {
 
     // Если машина не существует, добавляем её в базу данных
     if (count == 0) {
-        std::string query = "INSERT INTO Cars (model, licensePlate, parked) VALUES ('" +
-                            car->getModel() + "', '" + car->getLicensePlate() + "', " +
-                            std::to_string(car->isParked() ? 1 : 0) + ");";
+        std::string query = std::format("INSERT INTO Cars (model, licensePlate, parked) VALUES ('{}', '{}', {});",
+                                        car->getModel(), car->getLicensePlate(), car->isParked() ? 1 : 0);
         dbManager.executeQuery(query);
         cars.push_back(car);
     } else {
         std::cout << "Машина с номером " << car->getLicensePlate() << " уже существует.\n";
     }
 }
-
-
 
 void ParkingLot::removeCar(std::string_view licensePlate) {
     std::string query = "DELETE FROM Cars WHERE licensePlate = '" + std::string(licensePlate) + "';";
