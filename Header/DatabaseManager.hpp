@@ -9,7 +9,7 @@
 class DatabaseManager {
 public:
     // Конструктор
-    DatabaseManager(const std::string& dbFile) {
+    explicit DatabaseManager(const std::string& dbFile) {
         if (sqlite3_open(dbFile.c_str(), &db) != SQLITE_OK) {
             std::cerr << "Ошибка при открытии базы данных: " << sqlite3_errmsg(db) << std::endl;
         } else {
