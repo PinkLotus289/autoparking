@@ -21,6 +21,10 @@ void displayMenu() {
     cout << "Введите ваш выбор: ";
 }
 
+void handleInvalidChoice() {
+    std::cout << "Неверный выбор, попробуйте снова." << std::endl;
+}
+
 
 int main() {
     DatabaseManager dbManager("parking_lot.db"); // Создаем объект DatabaseManager для работы с БД
@@ -148,10 +152,9 @@ int main() {
                 break;
             }
             default:{
-                cout << "Неверный выбор, попробуйте снова." << endl;
+                handleInvalidChoice();
                 break;
             }
-            cout << endl;
     }
     }
     cout << "Завершение программы..." << endl;
