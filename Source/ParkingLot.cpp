@@ -13,6 +13,22 @@ ParkingLot::ParkingLot(std::string_view n, DatabaseManager& dbMgr)
 }
 
 
+// Функция для получения номера машины по ID машины из базы данных
+static std::string getLicensePlateById(DatabaseManager& dbManager, int carId) {
+    std::string licensePlate;
+    std::string carQuery = std::format("SELECT licensePlate FROM Cars WHERE id = {};", carId);
+    sqlite3_stmt* carStmt;
+
+    if (sqlite3_prepare_v2(dbManager.getDB(), carQuery.c_str(), -1, &carStmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(carStmt) == SQLITE_ROW) {
+            licensePlate = reinterpret_cast<const char*>(sqlite3_column_text(carStmt, 0));
+        }
+    }
+    sqlite3_finalize(carStmt);
+    return licensePlate;
+}
+
+
 void ParkingLot::loadCarsFromDatabase() {
     cars.clear();  // Очищаем вектор перед загрузкой данных
 
@@ -34,10 +50,9 @@ void ParkingLot::loadCarsFromDatabase() {
 }
 
 void ParkingLot::loadParkingSpotsFromDatabase() {
-    spots.clear();  // Очищаем вектор перед загрузкой данных
+    spots.clear();
 
-    // Добавляем сортировку по номеру парковочного места
-    std::string query = "SELECT number, size, occupied, carId FROM ParkingSpots ORDER BY number ASC;";
+    std::string query = "SELECT number, size, occupied, carId FROM ParkingSpots;";
     sqlite3_stmt* stmt;
 
     if (sqlite3_prepare_v2(dbManager.getDB(), query.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
@@ -49,27 +64,20 @@ void ParkingLot::loadParkingSpotsFromDatabase() {
 
             auto spot = std::make_shared<ParkingSpot>(number, size, occupied);
 
-            // Если место занято, получаем информацию о машине
             if (occupied) {
-                std::string carQuery = std::format("SELECT licensePlate FROM Cars WHERE id = {};", carId);
-                sqlite3_stmt* carStmt;
-                if (sqlite3_prepare_v2(dbManager.getDB(), carQuery.c_str(), -1, &carStmt, NULL) == SQLITE_OK) {
-                    if (sqlite3_step(carStmt) == SQLITE_ROW) {
-                        std::string licensePlate = reinterpret_cast<const char*>(sqlite3_column_text(carStmt, 0));
-                        auto car = getCar(licensePlate);  // Получаем машину из вектора
-                        if (car) {
-                            spot->assignCar(car);  // Привязываем машину к парковочному месту
-                        }
-                    }
+                std::string licensePlate = getLicensePlateById(dbManager, carId);
+                auto car = getCar(licensePlate);
+                if (car) {
+                    spot->assignCar(car);
                 }
-                sqlite3_finalize(carStmt);
             }
 
-            spots.push_back(spot);  // Добавляем в память только один раз
+            spots.push_back(spot);
         }
     }
     sqlite3_finalize(stmt);
 }
+
 
 void ParkingLot::createTables() {
     std::string createCarsTable = R"(
