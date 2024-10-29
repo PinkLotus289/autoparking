@@ -159,30 +159,30 @@ std::shared_ptr<Car> ParkingLot::getCar(std::string_view licensePlate) {
     return car;
 }
 
-void ParkingLot::addParkingSpot(std::shared_ptr<ParkingSpot> spot, DatabaseManager& dbManager) {
+void ParkingLot::addParkingSpot(std::shared_ptr<ParkingSpot> spot, DatabaseManager& databaseManager) {
     // Проверяем, существует ли парковочное место с таким номером в базе данных
     std::string checkQuery = "SELECT COUNT(*) FROM ParkingSpots WHERE number = " + std::to_string(spot->getNumber()) + ";";
     sqlite3_stmt* stmt;
     int count = 0;
-    
-    if (sqlite3_prepare_v2(dbManager.getDB(), checkQuery.c_str(), -1, &stmt, NULL) == SQLITE_OK) {
-        if (sqlite3_step(stmt) == SQLITE_ROW) {
-            count = sqlite3_column_int(stmt, 0);
-        }
+
+    if (sqlite3_prepare_v2(databaseManager.getDB(), checkQuery.c_str(), -1, &stmt, nullptr) == SQLITE_OK &&
+        sqlite3_step(stmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
     }
     sqlite3_finalize(stmt);
 
     // Если парковочное место не существует, добавляем его в базу данных
     if (count == 0) {
-        std::string query = "INSERT INTO ParkingSpots (number, size, occupied) VALUES (" + 
-                            std::to_string(spot->getNumber()) + ", '" + spot->getSize() + "', " + 
+        std::string query = "INSERT INTO ParkingSpots (number, size, occupied) VALUES (" +
+                            std::to_string(spot->getNumber()) + ", '" + spot->getSize() + "', " +
                             std::to_string(spot->isOccupied() ? 1 : 0) + ");";
-        dbManager.executeQuery(query);
+        databaseManager.executeQuery(query);
         spots.push_back(spot);
     } else {
         std::cout << "Парковочное место с номером " << spot->getNumber() << " уже существует.\n";
     }
 }
+
 
 void ParkingLot::removeParkingSpot(int spotNumber) {
     std::string                                                                                                                                                                                                                                                                                      query = "DELETE FROM ParkingSpots WHERE number = " + std::to_string(spotNumber) + ";";
