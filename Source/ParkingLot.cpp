@@ -187,7 +187,8 @@ void ParkingLot::addParkingSpot(std::shared_ptr<ParkingSpot> spot, DatabaseManag
 
 
 void ParkingLot::removeParkingSpot(int spotNumber) {
-    std::string                                                                                                                                                                                                                                                                                      query = "DELETE FROM ParkingSpots WHERE number = " + std::to_string(spotNumber) + ";";
+    std::string query = std::format("DELETE FROM ParkingSpots WHERE number = {};", spotNumber);
+
     if (dbManager.executeQuery(query)) {
         auto range = std::ranges::remove_if(spots, [&](const std::shared_ptr<ParkingSpot>& spot) {
             return spot->getNumber() == spotNumber;
@@ -201,23 +202,23 @@ void ParkingLot::removeParkingSpot(int spotNumber) {
 
 void ParkingLot::assignCarToSpot(std::string_view licensePlate, int spotNumber) {
     std::shared_ptr<Car> car = getCar(licensePlate);  // Получаем машину по номеру
-    ParkingSpot* spot = getParkingSpot(spotNumber);  // Получаем парковочное место по номеру
+    ParkingSpot* spot = getParkingSpot(spotNumber);    // Получаем парковочное место по номеру
 
     if (car && spot && !spot->isOccupied()) {
         // Привязываем машину к парковочному месту
         spot->assignCar(car);
-        car->setParked(true);  // Обновляем статус машины в памяти
+        car->setParked(true); // Обновляем статус машины в памяти
 
         // Обновляем статус машины в базе данных
-        std::string carUpdateQuery = "UPDATE Cars SET parked = 1 WHERE licensePlate = '" + std::string(licensePlate) + "';";
+        std::string carUpdateQuery = std::format(
+            "UPDATE Cars SET parked = 1 WHERE licensePlate = '{}';", licensePlate);
         dbManager.executeQuery(carUpdateQuery);
 
         // Обновляем статус парковочного места в базе данных
-        std::string spotUpdateQuery = "UPDATE ParkingSpots SET occupied = 1, carId = (SELECT id FROM Cars WHERE licensePlate = '" + 
-                                      std::string(licensePlate) + "') WHERE number = " + std::to_string(spotNumber) + ";";
+        std::string spotUpdateQuery = std::format(
+            "UPDATE ParkingSpots SET occupied = 1, carId = (SELECT id FROM Cars WHERE licensePlate = '{}') WHERE number = {};",
+            licensePlate, spotNumber);
         dbManager.executeQuery(spotUpdateQuery);
-
-        std::cout << "Машина с номером " << licensePlate << " закреплена за местом " << spotNumber << " и статус обновлён.\n";
     } else if (spot && spot->isOccupied()) {
         std::cout << "Парковочное место уже занято." << std::endl;
     } else {
