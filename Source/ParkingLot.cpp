@@ -111,18 +111,17 @@ void ParkingLot::addCar(std::shared_ptr<Car> car) {
     std::string checkQuery = "SELECT COUNT(*) FROM Cars WHERE licensePlate = '" + car->getLicensePlate() + "';";
     sqlite3_stmt* stmt;
     int count = 0;
-    
-    if (sqlite3_prepare_v2(dbManager.getDB(), checkQuery.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
-        if (sqlite3_step(stmt) == SQLITE_ROW) {
-            count = sqlite3_column_int(stmt, 0);
-        }
+
+    if (sqlite3_prepare_v2(dbManager.getDB(), checkQuery.c_str(), -1, &stmt, nullptr) == SQLITE_OK &&
+        sqlite3_step(stmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
     }
     sqlite3_finalize(stmt);
 
     // Если машина не существует, добавляем её в базу данных
     if (count == 0) {
-        std::string query = "INSERT INTO Cars (model, licensePlate, parked) VALUES ('" + 
-                            car->getModel() + "', '" + car->getLicensePlate() + "', " + 
+        std::string query = "INSERT INTO Cars (model, licensePlate, parked) VALUES ('" +
+                            car->getModel() + "', '" + car->getLicensePlate() + "', " +
                             std::to_string(car->isParked() ? 1 : 0) + ");";
         dbManager.executeQuery(query);
         cars.push_back(car);
@@ -130,6 +129,7 @@ void ParkingLot::addCar(std::shared_ptr<Car> car) {
         std::cout << "Машина с номером " << car->getLicensePlate() << " уже существует.\n";
     }
 }
+
 
 
 void ParkingLot::removeCar(std::string_view licensePlate) {
