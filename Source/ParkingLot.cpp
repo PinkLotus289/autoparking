@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <ranges>
+#include <format>
 
 ParkingLot::ParkingLot(std::string_view n, DatabaseManager& dbMgr) 
     : name(n), dbManager(dbMgr) {
@@ -50,7 +51,7 @@ void ParkingLot::loadParkingSpotsFromDatabase() {
 
             // Если место занято, получаем информацию о машине
             if (occupied) {
-                std::string carQuery = "SELECT licensePlate FROM Cars WHERE id = " + std::to_string(carId) + ";";
+                std::string carQuery = std::format("SELECT licensePlate FROM Cars WHERE id = {};", carId);
                 sqlite3_stmt* carStmt;
                 if (sqlite3_prepare_v2(dbManager.getDB(), carQuery.c_str(), -1, &carStmt, NULL) == SQLITE_OK) {
                     if (sqlite3_step(carStmt) == SQLITE_ROW) {
