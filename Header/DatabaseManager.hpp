@@ -48,14 +48,15 @@ public:
 
     // Выполнение запроса
     bool executeQuery(const std::string& query) {
-    char* errorMessage;
-    if (sqlite3_exec(db, query.c_str(), nullptr, nullptr, &errorMessage) != SQLITE_OK) {
+    if (char* errorMessage = nullptr;
+        sqlite3_exec(db, query.c_str(), nullptr, nullptr, &errorMessage) != SQLITE_OK) {
         std::cerr << "Ошибка SQL: " << errorMessage << std::endl;
         sqlite3_free(errorMessage);
         return false;
     }
     return true;
-}
+    }
+
 
 
     sqlite3* getDB() const { return db; }
