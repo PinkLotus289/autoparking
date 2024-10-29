@@ -2,7 +2,7 @@
 #include <iostream>
 #include <iomanip>
 
-ParkingSpot::ParkingSpot(int num, std::string_view sz, bool isOccupied)
+ParkingSpot::ParkingSpot(int num, const std::string& sz, bool isOccupied)
     : number(num), size(sz), occupied(isOccupied) {}
 
 int ParkingSpot::getNumber() const { return number; }
@@ -36,11 +36,15 @@ void ParkingSpot::displayParkingSpot() const {
               << std::left << std::setw(30) << (occupied ? "Занято" : "Свободно")
               << std::left << std::setw(30);
 
-    if (occupied && car) {
-        std::cout << std::left << car->getLicensePlate();
+    if (occupied && car) {  // Если место занято и есть машина
+        std::cout << std::left << car->getLicensePlate();  // Отображаем номер машины
     } else {
         std::cout << std::left << "Свободно";
     }
 
     std::cout << std::endl;
+}
+
+bool ParkingSpot::operator==(const ParkingSpot& other) const {
+    return this->size == other.size;
 }

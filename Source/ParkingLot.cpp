@@ -4,19 +4,127 @@
 #include <iomanip>
 #include <ranges>
 
-
-ParkingLot::ParkingLot(std::string_view n) : name(n) {}
-
-
-void ParkingLot::addCar(std::shared_ptr<Car> car) {
-    cars.push_back(std::move(car));
+ParkingLot::ParkingLot(std::string_view n, DatabaseManager& dbMgr) 
+    : name(n), dbManager(dbMgr) {
+    createTables(); // Создаем таблицы при инициализации
+    loadCarsFromDatabase(); // Загружаем машины из базы данных
+    loadParkingSpotsFromDatabase(); // Загружаем парковочные места из базы данных
 }
 
+
+void ParkingLot::loadCarsFromDatabase() {
+    cars.clear();  // Очищаем вектор перед загрузкой данных
+
+    std::string query = "SELECT model, licensePlate, parked FROM Cars;";
+    sqlite3_stmt* stmt;
+
+    if (sqlite3_prepare_v2(dbManager.getDB(), query.c_str(), -1, &stmt, NULL) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            std::string model = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+            std::string licensePlate = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            bool parked = sqlite3_column_int(stmt, 2);
+
+            auto car = std::make_shared<Car>(model, licensePlate);
+            car->setParked(parked);
+            cars.push_back(car);  // Добавляем в память только один раз
+        }
+    }
+    sqlite3_finalize(stmt);
+}
+
+void ParkingLot::loadParkingSpotsFromDatabase() {
+    spots.clear();  // Очищаем вектор перед загрузкой данных
+
+    // Добавляем сортировку по номеру парковочного места
+    std::string query = "SELECT number, size, occupied, carId FROM ParkingSpots ORDER BY number ASC;";
+    sqlite3_stmt* stmt;
+
+    if (sqlite3_prepare_v2(dbManager.getDB(), query.c_str(), -1, &stmt, NULL) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int number = sqlite3_column_int(stmt, 0);
+            std::string size = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            bool occupied = sqlite3_column_int(stmt, 2);
+            int carId = sqlite3_column_int(stmt, 3);
+
+            auto spot = std::make_shared<ParkingSpot>(number, size, occupied);
+
+            // Если место занято, получаем информацию о машине
+            if (occupied) {
+                std::string carQuery = "SELECT licensePlate FROM Cars WHERE id = " + std::to_string(carId) + ";";
+                sqlite3_stmt* carStmt;
+                if (sqlite3_prepare_v2(dbManager.getDB(), carQuery.c_str(), -1, &carStmt, NULL) == SQLITE_OK) {
+                    if (sqlite3_step(carStmt) == SQLITE_ROW) {
+                        std::string licensePlate = reinterpret_cast<const char*>(sqlite3_column_text(carStmt, 0));
+                        auto car = getCar(licensePlate);  // Получаем машину из вектора
+                        if (car) {
+                            spot->assignCar(car);  // Привязываем машину к парковочному месту
+                        }
+                    }
+                }
+                sqlite3_finalize(carStmt);
+            }
+
+            spots.push_back(spot);  // Добавляем в память только один раз
+        }
+    }
+    sqlite3_finalize(stmt);
+}
+
+void ParkingLot::createTables() {
+    std::string createCarsTable = R"(
+        CREATE TABLE IF NOT EXISTS Cars (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            model TEXT,
+            licensePlate TEXT UNIQUE,
+            parked INTEGER
+        );
+    )";
+    std::string createSpotsTable = R"(
+        CREATE TABLE IF NOT EXISTS ParkingSpots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            number INTEGER UNIQUE,
+            size TEXT,
+            occupied INTEGER,
+            carId INTEGER,
+            FOREIGN KEY(carId) REFERENCES Cars(id)
+        );
+    )";
+    dbManager.executeQuery(createCarsTable);
+    dbManager.executeQuery(createSpotsTable);
+}
+
+void ParkingLot::addCar(std::shared_ptr<Car> car) {
+    // Проверяем, существует ли машина с таким номером в базе данных
+    std::string checkQuery = "SELECT COUNT(*) FROM Cars WHERE licensePlate = '" + car->getLicensePlate() + "';";
+    sqlite3_stmt* stmt;
+    int count = 0;
+    
+    if (sqlite3_prepare_v2(dbManager.getDB(), checkQuery.c_str(), -1, &stmt, NULL) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            count = sqlite3_column_int(stmt, 0);
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    // Если машина не существует, добавляем её в базу данных
+    if (count == 0) {
+        std::string query = "INSERT INTO Cars (model, licensePlate, parked) VALUES ('" + 
+                            car->getModel() + "', '" + car->getLicensePlate() + "', " + 
+                            std::to_string(car->isParked() ? 1 : 0) + ");";
+        dbManager.executeQuery(query);
+        cars.push_back(car);
+    } else {
+        std::cout << "Машина с номером " << car->getLicensePlate() << " уже существует.\n";
+    }
+}
+
+
 void ParkingLot::removeCar(std::string_view licensePlate) {
-    auto range = std::ranges::remove_if(cars, [&](const std::shared_ptr<Car>& car) {
-        return car->getLicensePlate() == licensePlate;
-    });
-    if (range.begin() != cars.end()) {
+    std::string query = "DELETE FROM Cars WHERE licensePlate = '" + std::string(licensePlate) + "';";
+    if (dbManager.executeQuery(query)) {
+        auto range = std::ranges::remove_if(cars, [&](const std::shared_ptr<Car>& car) {
+            return car->getLicensePlate() == licensePlate;
+        });
         cars.erase(range.begin(), range.end());
         std::cout << "Машина с номерным знаком " << licensePlate << " удалена." << std::endl;
     } else {
@@ -25,31 +133,115 @@ void ParkingLot::removeCar(std::string_view licensePlate) {
 }
 
 std::shared_ptr<Car> ParkingLot::getCar(std::string_view licensePlate) {
-    for (const auto& car : cars) {
-        if (car->getLicensePlate() == licensePlate) {
-            return car;
+    // Запрос к базе данных и создание объекта Car
+    std::string query = "SELECT model, parked FROM Cars WHERE licensePlate = '" + std::string(licensePlate) + "';";
+    sqlite3_stmt* stmt;
+    sqlite3_prepare_v2(dbManager.getDB(), query.c_str(), -1, &stmt, NULL);
+
+    std::shared_ptr<Car> car = nullptr;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string model = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        bool parked = sqlite3_column_int(stmt, 1);
+        car = std::make_shared<Car>(std::string(model), std::string(licensePlate)); // Используем std::string
+        car->setParked(parked);
+    }
+    sqlite3_finalize(stmt);
+    return car;
+}
+
+void ParkingLot::addParkingSpot(std::shared_ptr<ParkingSpot> spot, DatabaseManager& dbManager) {
+    // Проверяем, существует ли парковочное место с таким номером в базе данных
+    std::string checkQuery = "SELECT COUNT(*) FROM ParkingSpots WHERE number = " + std::to_string(spot->getNumber()) + ";";
+    sqlite3_stmt* stmt;
+    int count = 0;
+    
+    if (sqlite3_prepare_v2(dbManager.getDB(), checkQuery.c_str(), -1, &stmt, NULL) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            count = sqlite3_column_int(stmt, 0);
         }
     }
-    return nullptr;
+    sqlite3_finalize(stmt);
+
+    // Если парковочное место не существует, добавляем его в базу данных
+    if (count == 0) {
+        std::string query = "INSERT INTO ParkingSpots (number, size, occupied) VALUES (" + 
+                            std::to_string(spot->getNumber()) + ", '" + spot->getSize() + "', " + 
+                            std::to_string(spot->isOccupied() ? 1 : 0) + ");";
+        dbManager.executeQuery(query);
+        spots.push_back(spot);
+    } else {
+        std::cout << "Парковочное место с номером " << spot->getNumber() << " уже существует.\n";
+    }
 }
-
-
-void ParkingLot::addParkingSpot(std::shared_ptr<ParkingSpot> spot) {
-    spots.push_back(std::move(spot));
-}
-
 
 void ParkingLot::removeParkingSpot(int spotNumber) {
-    auto range = std::ranges::remove_if(spots, [&](const std::shared_ptr<ParkingSpot>& spot) {
-        return spot->getNumber() == spotNumber;
-    });
-    if (range.begin() != spots.end()) {
+    std::string                                                                                                                                                                                                                                                                                      query = "DELETE FROM ParkingSpots WHERE number = " + std::to_string(spotNumber) + ";";
+    if (dbManager.executeQuery(query)) {
+        auto range = std::ranges::remove_if(spots, [&](const std::shared_ptr<ParkingSpot>& spot) {
+            return spot->getNumber() == spotNumber;
+        });
         spots.erase(range.begin(), range.end());
         std::cout << "Парковочное место " << spotNumber << " удалено." << std::endl;
     } else {
         std::cout << "Парковочное место не найдено." << std::endl;
     }
 }
+
+void ParkingLot::assignCarToSpot(std::string_view licensePlate, int spotNumber) {
+    std::shared_ptr<Car> car = getCar(licensePlate);  // Получаем машину по номеру
+    ParkingSpot* spot = getParkingSpot(spotNumber);  // Получаем парковочное место по номеру
+
+    if (car && spot && !spot->isOccupied()) {
+        // Привязываем машину к парковочному месту
+        spot->assignCar(car);
+        car->setParked(true);  // Обновляем статус машины в памяти
+
+        // Обновляем статус машины в базе данных
+        std::string carUpdateQuery = "UPDATE Cars SET parked = 1 WHERE licensePlate = '" + std::string(licensePlate) + "';";
+        dbManager.executeQuery(carUpdateQuery);
+
+        // Обновляем статус парковочного места в базе данных
+        std::string spotUpdateQuery = "UPDATE ParkingSpots SET occupied = 1, carId = (SELECT id FROM Cars WHERE licensePlate = '" + 
+                                      std::string(licensePlate) + "') WHERE number = " + std::to_string(spotNumber) + ";";
+        dbManager.executeQuery(spotUpdateQuery);
+
+        std::cout << "Машина с номером " << licensePlate << " закреплена за местом " << spotNumber << " и статус обновлён.\n";
+    } else if (spot && spot->isOccupied()) {
+        std::cout << "Парковочное место уже занято." << std::endl;
+    } else {
+        std::cout << "Ошибка: Машина или место не найдены." << std::endl;
+    }
+}
+
+
+void ParkingLot::releaseParkingSpot(int spotNumber) {
+    ParkingSpot* spot = getParkingSpot(spotNumber);  // Ищем парковочное место
+
+    if (spot && spot->isOccupied()) {
+        std::shared_ptr<Car> car = spot->getCar();  // Получаем машину, если она есть
+
+        if (car) {
+            car->setParked(false);  // Обновляем статус машины в памяти
+
+            // Обновляем запись в базе данных для машины, чтобы указать, что она больше не запаркована
+            std::string carUpdateQuery = "UPDATE Cars SET parked = 0 WHERE licensePlate = '" + car->getLicensePlate() + "';";
+            dbManager.executeQuery(carUpdateQuery);
+        }
+
+        // Освобождаем место в памяти
+        spot->removeCar();
+
+        // Обновляем запись в базе данных для парковочного места, чтобы указать, что оно свободно
+        std::string spotUpdateQuery = "UPDATE ParkingSpots SET occupied = 0, carId = NULL WHERE number = " + std::to_string(spotNumber) + ";";
+        dbManager.executeQuery(spotUpdateQuery);
+
+        std::cout << "Парковочное место " << spotNumber << " теперь свободно.\n";
+    } else {
+        std::cout << "Парковочное место либо не найдено, либо уже свободно." << std::endl;
+    }
+}
+
+
 
 ParkingSpot* ParkingLot::getParkingSpot(int spotNumber) {
     for (const auto& spot : spots) {
@@ -60,27 +252,19 @@ ParkingSpot* ParkingLot::getParkingSpot(int spotNumber) {
     return nullptr;
 }
 
-void ParkingLot::assignCarToSpot(std::string_view licensePlate, int spotNumber) {
-    std::shared_ptr<Car> car = getCar(licensePlate);
-    ParkingSpot* spot = getParkingSpot(spotNumber);
-
-    if (car && spot && !spot->isOccupied()) {
-        spot->assignCar(car);
-        car->setParked(true); 
-        std::cout << "Машина с номером " << licensePlate << " закреплена за местом " << spotNumber << "." << std::endl;
-    } else if (spot && spot->isOccupied()) {
-        std::cout << "Парковочное место уже занято." << std::endl;
-    } else {
-        std::cout << "Ошибка: Машина или место не найдены." << std::endl;
-    }
+const std::vector<std::shared_ptr<ParkingSpot>>& ParkingLot::getParkingSpots() const{
+    return spots;
 }
 
-void ParkingLot::displayParkingLot(bool isAdmin) const {
+void ParkingLot::displayParkingLot(bool isAdmin){
+    // Загружаем актуальные данные из базы данных перед выводом
+    loadCarsFromDatabase();
+    loadParkingSpotsFromDatabase();
+
     std::cout << "\nИнформация для " << (isAdmin ? "администратора:" : "пользователя:") << "\n";
     std::cout << "\n=== Информация о парковке ===\n";
     std::cout << "Парковка: " << name << "\n";
 
-    
     if (isAdmin) {
         std::cout << "\nМашины на парковке:\n";
         std::cout << std::left << std::setw(20) << "Марка"
@@ -98,7 +282,6 @@ void ParkingLot::displayParkingLot(bool isAdmin) const {
         }
     }
 
-    
     std::cout << "\nПарковочные места:\n";
     std::cout << std::left << std::setw(15) << "Номер"
               << std::left << std::setw(25) << "Размер"
@@ -122,19 +305,38 @@ void ParkingLot::displayParkingLot(bool isAdmin) const {
     }
 
     std::cout << std::string(60, '=') << "\n" << std::endl;
+
+    // Вызываем дружественную функцию для вычисления процента свободных мест
+    double freePercentage = calculateFreeSpotPercentage(*this);
+
+    // Выводим процент свободных мест
+    std::cout << "Процент свободных мест: " << freePercentage << "%\n";
+    std::cout << std::string(60, '=') << "\n" << std::endl;
 }
 
-
-void ParkingLot::releaseParkingSpot(int spotNumber) {
-    ParkingSpot* spot = getParkingSpot(spotNumber);
-
-    if (spot && spot->isOccupied()) {
-        if (std::shared_ptr<Car> car = spot->getCar(); car) {  
-            car->setParked(false);  
-        }
-        spot->removeCar();
-        std::cout << "Парковочное место " << spotNumber << " теперь свободно." << std::endl;
-    } else {
-        std::cout << "Парковочное место либо не найдено, либо уже свободно." << std::endl;
+double calculateFreeSpotPercentage(const ParkingLot& lot) {
+    if (lot.spots.empty()) {
+        return 0.0;  // Если нет парковочных мест, процент свободных мест — 0%
     }
+
+    int freeSpots = 0;
+    for (const auto& spot : lot.spots) {
+        if (!spot->isOccupied()) {
+            freeSpots++;  // Считаем количество свободных мест
+        }
+    }
+
+    // Вычисляем процент свободных мест
+    return static_cast<int>(std::round((static_cast<double>(freeSpots) / lot.spots.size()) * 100));
+}
+
+ParkingLot& ParkingLot::operator+=(std::shared_ptr<ParkingSpot> spot) {
+    DatabaseManager dbManager("parking_lot.db");  // Создаем объект для работы с БД
+    addParkingSpot(spot, dbManager);  // Вызываем существующую функцию добавления места
+    return *this;
+}
+
+ParkingLot& ParkingLot::operator-=(int spotNumber) {
+    removeParkingSpot(spotNumber);  // Вызываем существующую функцию удаления
+    return *this;
 }

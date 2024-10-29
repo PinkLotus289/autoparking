@@ -2,9 +2,8 @@
 #include <iostream>
 #include <iomanip>
 
-
-Car::Car(std::string mdl, std::string lp)
-    : model(std::move(mdl)), licensePlate(std::move(lp)) {}
+Car::Car(const std::string& mdl, const std::string& lp)
+    : model(mdl), licensePlate(lp) {}
 
 std::string Car::getModel() const { return model; }
 std::string Car::getLicensePlate() const { return licensePlate; }
