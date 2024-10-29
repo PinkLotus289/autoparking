@@ -25,6 +25,20 @@ void handleInvalidChoice() {
     std::cout << "Неверный выбор, попробуйте снова." << std::endl;
 }
 
+void displaySimilarFreeSpots(const std::string& size, const std::vector<std::shared_ptr<ParkingSpot>>& spots) {
+    std::cout << "\nСвободные парковочные места аналогичного размера (" << size << "):\n";
+    std::cout << std::left << std::setw(10) << "Номер" << std::left << std::setw(30) << "Размер" << std::endl;
+    std::cout << std::string(40, '-') << std::endl;
+
+    for (const auto& spot : spots) {
+        if (!spot->isOccupied() && spot->getSize() == size) {
+            std::cout << std::left << std::setw(10) << spot->getNumber()
+                      << std::left << std::setw(30) << spot->getSize() << std::endl;
+        }
+    }
+}
+
+
 
 int main() {
     DatabaseManager dbManager("parking_lot.db"); // Создаем объект DatabaseManager для работы с БД
@@ -122,30 +136,18 @@ int main() {
                 parkingLot->releaseParkingSpot(spotNumber);  // Освобождаем место и обновляем статус автомобиля
                 break;
             }
-            case 9: {  // Новый case для вывода аналогичных свободных мест
-                std::cout << "Введите номер парковочного места для поиска аналогичных свободных мест: ";
-                int spotNumber;
-                std::cin >> spotNumber;
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            case 9: {
+            std::cout << "Введите номер парковочного места для поиска аналогичных свободных мест: ";
+            int spotNumber;
+            std::cin >> spotNumber;
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-                if (const ParkingSpot* selectedSpot = parkingLot->getParkingSpot(spotNumber)) {
-                    std::cout << "\nСвободные парковочные места аналогичного размера (" << selectedSpot->getSize() << "):\n";
-                    std::cout << std::left << std::setw(10) << "Номер"
-                            << std::left << std::setw(30) << "Размер" << std::endl;
-                    std::cout << std::string(40, '-') << std::endl;
-
-                    // Используем метод getParkingSpots() для получения списка мест
-                    for (const auto& spot : parkingLot->getParkingSpots()) {
-                        if (!spot->isOccupied() && *spot == *selectedSpot) {
-                            std::cout << std::left << std::setw(10) << spot->getNumber()
-                                    << std::left << std::setw(30) << spot->getSize()
-                                    << std::endl;
-                        }
-                    }
-                } else {
-                    std::cout << "Парковочное место с таким номером не найдено.\n";
-                }
-                break;
+            if (const ParkingSpot* selectedSpot = parkingLot->getParkingSpot(spotNumber)) {
+                displaySimilarFreeSpots(selectedSpot->getSize(), parkingLot->getParkingSpots());
+            } else {
+                std::cout << "Парковочное место с номером " << spotNumber << " не найдено." << std::endl;
+            }
+            break;
             }
             case 10: {
                 running = false;
