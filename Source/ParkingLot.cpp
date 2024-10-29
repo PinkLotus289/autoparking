@@ -28,6 +28,25 @@ static std::string getLicensePlateById(const DatabaseManager& dbManager, int car
     return licensePlate;
 }
 
+std::shared_ptr<ParkingSpot> loadParkingSpot(sqlite3_stmt* stmt, ParkingLot& parkingLot, DatabaseManager& dbManager) {
+    int number = sqlite3_column_int(stmt, 0);
+    std::string size = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+    bool occupied = sqlite3_column_int(stmt, 2);
+    int carId = sqlite3_column_int(stmt, 3);
+
+    auto spot = std::make_shared<ParkingSpot>(number, size, occupied);
+
+    if (occupied) {
+        std::string licensePlate = getLicensePlateById(dbManager, carId);
+        auto car = parkingLot.getCar(licensePlate);  // Доступ к методу через объект parkingLot
+        if (car) {
+            spot->assignCar(car);
+        }
+    }
+
+    return spot;
+}
+
 
 
 
@@ -53,32 +72,18 @@ void ParkingLot::loadCarsFromDatabase() {
 
 void ParkingLot::loadParkingSpotsFromDatabase() {
     spots.clear();
-
     std::string query = "SELECT number, size, occupied, carId FROM ParkingSpots;";
     sqlite3_stmt* stmt;
 
     if (sqlite3_prepare_v2(dbManager.getDB(), query.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
         while (sqlite3_step(stmt) == SQLITE_ROW) {
-            int number = sqlite3_column_int(stmt, 0);
-            std::string size = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-            bool occupied = sqlite3_column_int(stmt, 2);
-            int carId = sqlite3_column_int(stmt, 3);
-
-            auto spot = std::make_shared<ParkingSpot>(number, size, occupied);
-
-            if (occupied) {
-                std::string licensePlate = getLicensePlateById(dbManager, carId);
-                auto car = getCar(licensePlate);
-                if (car) {
-                    spot->assignCar(car);
-                }
-            }
-
+            auto spot = loadParkingSpot(stmt, *this, dbManager);
             spots.push_back(spot);
         }
     }
     sqlite3_finalize(stmt);
 }
+
 
 
 void ParkingLot::createTables() {
