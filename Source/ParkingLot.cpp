@@ -228,32 +228,31 @@ void ParkingLot::assignCarToSpot(std::string_view licensePlate, int spotNumber) 
 
 
 void ParkingLot::releaseParkingSpot(int spotNumber) {
-    ParkingSpot* spot = getParkingSpot(spotNumber);  // Ищем парковочное место
+    ParkingSpot* spot = getParkingSpot(spotNumber); // Ищем парковочное место
 
     if (spot && spot->isOccupied()) {
-        std::shared_ptr<Car> car = spot->getCar();  // Получаем машину, если она есть
-
-        if (car) {
-            car->setParked(false);  // Обновляем статус машины в памяти
+        if (std::shared_ptr<Car> car = spot->getCar(); car) {
+            car->setParked(false); // Обновляем статус машины в памяти
 
             // Обновляем запись в базе данных для машины, чтобы указать, что она больше не запаркована
-            std::string carUpdateQuery = "UPDATE Cars SET parked = 0 WHERE licensePlate = '" + car->getLicensePlate() + "';";
+            std::string carUpdateQuery = std::format(
+                "UPDATE Cars SET parked = 0 WHERE licensePlate = '{}';", car->getLicensePlate());
             dbManager.executeQuery(carUpdateQuery);
         }
 
         // Освобождаем место в памяти
         spot->removeCar();
-
-        // Обновляем запись в базе данных для парковочного места, чтобы указать, что оно свободно
-        std::string spotUpdateQuery = "UPDATE ParkingSpots SET occupied = 0, carId = NULL WHERE number = " + std::to_string(spotNumber) + ";";
+        
+        // Обновляем запись в базе данных для парковочного места
+        std::string spotUpdateQuery = std::format(
+            "UPDATE ParkingSpots SET occupied = 0, carId = NULL WHERE number = {};", spotNumber);
         dbManager.executeQuery(spotUpdateQuery);
 
-        std::cout << "Парковочное место " << spotNumber << " теперь свободно.\n";
+        std::cout << "Парковочное место " << spotNumber << " освобождено." << std::endl;
     } else {
         std::cout << "Парковочное место либо не найдено, либо уже свободно." << std::endl;
     }
 }
-
 
 
 ParkingSpot* ParkingLot::getParkingSpot(int spotNumber) {
