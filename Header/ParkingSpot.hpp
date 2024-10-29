@@ -7,7 +7,7 @@
 
 class ParkingSpot {
 public:
-    ParkingSpot(int number, std::string_view size, bool occupied = false);
+    ParkingSpot(int number, const std::string& size, bool occupied = false);
 
     int getNumber() const;
     std::string getSize() const;
@@ -20,6 +20,8 @@ public:
     void removeCar();
     std::shared_ptr<Car> getCar() const;
 
+    bool operator==(const ParkingSpot& other) const;
+
 private:
     int number;
     std::string size;
@@ -27,4 +29,4 @@ private:
     std::shared_ptr<Car> car = nullptr;
 };
 
-#endif 
+#endif

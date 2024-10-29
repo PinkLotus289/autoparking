@@ -6,7 +6,7 @@
 
 class Car {
 public:
-    Car(std::string model, std::string licensePlate);
+    Car(const std::string& model, const std::string& licensePlate);
 
     std::string getModel() const;
     std::string getLicensePlate() const;
@@ -20,4 +20,4 @@ private:
     bool parked = false;
 };
 
-#endif 
+#endif
