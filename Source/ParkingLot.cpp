@@ -14,7 +14,7 @@ ParkingLot::ParkingLot(std::string_view n, DatabaseManager& dbMgr)
 
 
 // Функция для получения номера машины по ID машины из базы данных
-static std::string getLicensePlateById(DatabaseManager& dbManager, int carId) {
+static std::string getLicensePlateById(const DatabaseManager& dbManager, int carId) {
     std::string licensePlate;
     std::string carQuery = std::format("SELECT licensePlate FROM Cars WHERE id = {};", carId);
     sqlite3_stmt* carStmt;
@@ -27,6 +27,7 @@ static std::string getLicensePlateById(DatabaseManager& dbManager, int carId) {
     sqlite3_finalize(carStmt);
     return licensePlate;
 }
+
 
 
 void ParkingLot::loadCarsFromDatabase() {
