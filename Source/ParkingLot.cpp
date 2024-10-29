@@ -19,14 +19,15 @@ static std::string getLicensePlateById(const DatabaseManager& dbManager, int car
     std::string carQuery = std::format("SELECT licensePlate FROM Cars WHERE id = {};", carId);
     sqlite3_stmt* carStmt;
 
-    if (sqlite3_prepare_v2(dbManager.getDB(), carQuery.c_str(), -1, &carStmt, nullptr) == SQLITE_OK) {
-        if (sqlite3_step(carStmt) == SQLITE_ROW) {
-            licensePlate = reinterpret_cast<const char*>(sqlite3_column_text(carStmt, 0));
-        }
+    if (sqlite3_prepare_v2(dbManager.getDB(), carQuery.c_str(), -1, &carStmt, nullptr) == SQLITE_OK &&
+        sqlite3_step(carStmt) == SQLITE_ROW) {
+        licensePlate = reinterpret_cast<const char*>(sqlite3_column_text(carStmt, 0));
     }
+    
     sqlite3_finalize(carStmt);
     return licensePlate;
 }
+
 
 
 
