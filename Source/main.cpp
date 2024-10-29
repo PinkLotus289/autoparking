@@ -124,10 +124,7 @@ int main() {
                 std::cin >> spotNumber;
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-                // Получаем место по номеру
-                const ParkingSpot* selectedSpot = parkingLot->getParkingSpot(spotNumber);
-
-                if (selectedSpot) {
+                if (const ParkingSpot* selectedSpot = parkingLot->getParkingSpot(spotNumber)) {
                     std::cout << "\nСвободные парковочные места аналогичного размера (" << selectedSpot->getSize() << "):\n";
                     std::cout << std::left << std::setw(10) << "Номер"
                             << std::left << std::setw(30) << "Размер" << std::endl;
