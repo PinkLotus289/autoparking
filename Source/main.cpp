@@ -55,12 +55,10 @@ int main() {
 
         switch (choice) {
             case 1: {
-                //cout << "\nИнформация для обычного пользователя:" << endl;
                 parkingLot->displayParkingLot(false);
                 break;
             }
             case 2: {
-                //cout << "\nИнформация для администратора:" << endl;
                 parkingLot->displayParkingLot(true);
                 break;
             }

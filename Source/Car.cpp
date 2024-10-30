@@ -16,5 +16,5 @@ bool Car::getStatus() const {
 }
 
 void Car::display() {
-    std::cout << std::format("{:<25}{:<50}{:<30}\n", model, licensePlate, parked ? "Запаркован" : "Не запаркован");
+    std::cout << std::format("{:<15} {:<15} {:<20}\n", model, licensePlate, parked ? "Запаркован" : "Не запаркован");
 }

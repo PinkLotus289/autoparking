@@ -33,12 +33,10 @@ std::shared_ptr<Car> ParkingSpot::getCar() const {
 }
 
 void ParkingSpot::display() {
-    std::cout << std::format("{:<10}{:<30}{:<30}", number, size, occupied ? "Занято" : "Свободно");
-
     if (occupied && car) {
-        std::cout << std::format("{:<30}\n", car->getLicensePlate());
+        std::cout << std::format("{:<10} {:<15} {:<15} {:<15}\n", number, size, "Занято", car->getLicensePlate());
     } else {
-        std::cout << std::format("{:<30}\n", "Свободно");
+        std::cout << std::format("{:<10} {:<15} {:<15} {:<15}\n", number, size, "Свободно", "-");
     }
 }
 

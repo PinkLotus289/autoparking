@@ -271,10 +271,7 @@ void ParkingLot::displayParkingLot(bool isAdmin) {
         std::cout << std::string(50, '-') << '\n';
 
         for (const auto& car : cars) {
-            std::cout << std::format("{:<15} {:<15} {:<20}\n",
-                                     car->getModel(),
-                                     car->getLicensePlate(),
-                                     car->getStatus() ? "Запаркован" : "Не запаркован");
+            car->display(); // Вызов display() у объекта Car
         }
     }
 
@@ -283,13 +280,7 @@ void ParkingLot::displayParkingLot(bool isAdmin) {
     std::cout << std::string(50, '-') << '\n';
 
     for (const auto& spot : spots) {
-        std::cout << std::format("{:<10} {:<15} {:<15}", spot->getNumber(), spot->getSize(), spot->getStatus() ? "Занято" : "Свободно");
-
-        if (spot->getStatus() && spot->getCar()) {
-            std::cout << std::format("{:<15}\n", spot->getCar()->getLicensePlate());
-        } else {
-            std::cout << std::format("{:<15}\n", "-");
-        }
+        spot->display(); // Вызов display() у объекта ParkingSpot
     }
 
     std::cout << std::string(50, '=') << "\n\n";
