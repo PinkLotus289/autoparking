@@ -268,62 +268,43 @@ const std::vector<std::shared_ptr<ParkingSpot>>& ParkingLot::getParkingSpots() c
     return spots;
 }
 
-void ParkingLot::displayParkingLot(bool isAdmin){
-    // Загружаем актуальные данные из базы данных перед выводом
+void ParkingLot::displayParkingLot(bool isAdmin) {
     loadCarsFromDatabase();
     loadParkingSpotsFromDatabase();
 
-    std::cout << "\nИнформация для " << (isAdmin ? "администратора:" : "пользователя:") << "\n";
+    std::cout << std::format("\nИнформация для {}:\n", isAdmin ? "администратора" : "пользователя");
     std::cout << "\n=== Информация о парковке ===\n";
-    std::cout << "Парковка: " << name << "\n";
+    std::cout << std::format("Парковка: {}\n", name);
 
     if (isAdmin) {
         std::cout << "\nМашины на парковке:\n";
-        std::cout << std::left << std::setw(20) << "Марка"
-                  << std::left << std::setw(34) << "Номерной знак" 
-                  << std::left << std::setw(30) << "Статус" 
-                  << std::endl;
-        std::cout << std::string(60, '-') << std::endl;
+        std::cout << std::format("{:<15}{:<15}{:<20}\n", "Марка", "Номерной знак", "Статус");
+        std::cout << std::string(50, '-') << '\n';
 
         for (const auto& car : cars) {
-            std::cout << std::left 
-                      << std::setw(15) << car->getModel()
-                      << std::setw(25) << car->getLicensePlate()
-                      << std::setw(30) << (car->isParked() ? "Запаркован" : "Не запаркован")
-                      << std::endl;
+            std::cout << std::format("{:<15}{:<15}{:<20}\n", car->getModel(), car->getLicensePlate(), car->isParked() ? "Запаркован" : "Не запаркован");
         }
     }
 
     std::cout << "\nПарковочные места:\n";
-    std::cout << std::left << std::setw(15) << "Номер"
-              << std::left << std::setw(25) << "Размер"
-              << std::left << std::setw(25) << "Занятость"
-              << std::left << std::setw(20) << "Кем занято" << std::endl;
-    std::cout << std::string(60, '-') << std::endl;
+    std::cout << std::format("{:<10}{:<15}{:<15}{:<15}\n", "Номер", "Размер", "Занятость", "Кем занято");
+    std::cout << std::string(50, '-') << '\n';
 
     for (const auto& spot : spots) {
-        if (isAdmin || !spot->isOccupied()) {
-            std::cout << std::left << std::setw(10) << spot->getNumber()
-                      << std::left << std::setw(29) << spot->getSize()
-                      << std::left << std::setw(25) << (spot->isOccupied() ? "Занято" : "Свободно");
-            
-            if (spot->isOccupied() && spot->getCar()) {
-                std::cout << std::left << std::setw(20) << spot->getCar()->getLicensePlate();
-            } else {
-                std::cout << std::left << std::setw(20) << "-";
-            }
-            std::cout << std::endl;
+        std::cout << std::format("{:<10}{:<15}{:<15}", spot->getNumber(), spot->getSize(), spot->isOccupied() ? "Занято" : "Свободно");
+
+        if (spot->isOccupied() && spot->getCar()) {
+            std::cout << std::format("{:<15}\n", spot->getCar()->getLicensePlate());
+        } else {
+            std::cout << std::format("{:<15}\n", "-");
         }
     }
 
-    std::cout << std::string(60, '=') << "\n" << std::endl;
+    std::cout << std::string(50, '=') << "\n\n";
 
-    // Вызываем дружественную функцию для вычисления процента свободных мест
     double freePercentage = calculateFreeSpotPercentage(*this);
-
-    // Выводим процент свободных мест
-    std::cout << "Процент свободных мест: " << freePercentage << "%\n";
-    std::cout << std::string(60, '=') << "\n" << std::endl;
+    std::cout << std::format("Процент свободных мест: {:.2f}%\n", freePercentage);
+    std::cout << std::string(50, '=') << "\n\n";
 }
 
 double calculateFreeSpotPercentage(const ParkingLot& lot) {

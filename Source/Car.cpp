@@ -1,6 +1,7 @@
 #include "../Header/Car.hpp"
 #include <iostream>
 #include <iomanip>
+#include <format>
 
 Car::Car(const std::string& mdl, const std::string& lp)
     : model(mdl), licensePlate(lp) {}
@@ -15,8 +16,5 @@ bool Car::isParked() const {
 }
 
 void Car::displayCar() const {
-    std::cout << std::left << std::setw(25) << model 
-              << std::left << std::setw(50) << licensePlate 
-              << std::right << std::setw(30) << (parked ? "Запаркован" : "Не запаркован")
-              << std::endl;
+    std::cout << std::format("{:<25}{:<50}{:<30}\n", model, licensePlate, parked ? "Запаркован" : "Не запаркован");
 }

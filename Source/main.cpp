@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <iomanip>
+#include <format>
 #include "../Header/ParkingLot.hpp"
 #include "../Header/DatabaseManager.hpp"
 
@@ -26,18 +27,16 @@ void handleInvalidChoice() {
 }
 
 void displaySimilarFreeSpots(const std::string& size, const std::vector<std::shared_ptr<ParkingSpot>>& spots) {
-    std::cout << "\nСвободные парковочные места аналогичного размера (" << size << "):\n";
-    std::cout << std::left << std::setw(10) << "Номер" << std::left << std::setw(30) << "Размер" << std::endl;
-    std::cout << std::string(40, '-') << std::endl;
+    std::cout << std::format("\nСвободные парковочные места аналогичного размера ({}):\n", size);
+    std::cout << std::format("{:<10}{:<30}\n", "Номер", "Размер");
+    std::cout << std::string(40, '-') << '\n';
 
     for (const auto& spot : spots) {
         if (!spot->isOccupied() && spot->getSize() == size) {
-            std::cout << std::left << std::setw(10) << spot->getNumber()
-                      << std::left << std::setw(30) << spot->getSize() << std::endl;
+            std::cout << std::format("{:<10}{:<30}\n", spot->getNumber(), spot->getSize());
         }
     }
 }
-
 
 
 int main() {

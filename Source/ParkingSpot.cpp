@@ -1,6 +1,7 @@
 #include "../Header/ParkingSpot.hpp"
 #include <iostream>
 #include <iomanip>
+#include <format>
 
 ParkingSpot::ParkingSpot(int num, const std::string& sz, bool isOccupied)
     : number(num), size(sz), occupied(isOccupied) {}
@@ -31,18 +32,13 @@ std::shared_ptr<Car> ParkingSpot::getCar() const {
 }
 
 void ParkingSpot::displayParkingSpot() const {
-    std::cout << std::left << std::setw(10) << number
-              << std::left << std::setw(30) << size
-              << std::left << std::setw(30) << (occupied ? "Занято" : "Свободно")
-              << std::left << std::setw(30);
+    std::cout << std::format("{:<10}{:<30}{:<30}", number, size, occupied ? "Занято" : "Свободно");
 
-    if (occupied && car) {  // Если место занято и есть машина
-        std::cout << std::left << car->getLicensePlate();  // Отображаем номер машины
+    if (occupied && car) {
+        std::cout << std::format("{:<30}\n", car->getLicensePlate());
     } else {
-        std::cout << std::left << "Свободно";
+        std::cout << std::format("{:<30}\n", "Свободно");
     }
-
-    std::cout << std::endl;
 }
 
 bool ParkingSpot::operator==(const ParkingSpot& other) const {
