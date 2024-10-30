@@ -268,6 +268,7 @@ const std::vector<std::shared_ptr<ParkingSpot>>& ParkingLot::getParkingSpots() c
     return spots;
 }
 
+
 void ParkingLot::displayParkingLot(bool isAdmin) {
     loadCarsFromDatabase();
     loadParkingSpotsFromDatabase();
@@ -278,11 +279,14 @@ void ParkingLot::displayParkingLot(bool isAdmin) {
 
     if (isAdmin) {
         std::cout << "\nМашины на парковке:\n";
-        std::cout << std::format("{:<15}{:<15}{:<20}\n", "Марка", "Номерной знак", "Статус");
+        std::cout << std::format("{:<15}{:<20}{:<15}\n", "Марка", "Номерной знак", "Статус");
         std::cout << std::string(50, '-') << '\n';
 
         for (const auto& car : cars) {
-            std::cout << std::format("{:<15}{:<15}{:<20}\n", car->getModel(), car->getLicensePlate(), car->isParked() ? "Запаркован" : "Не запаркован");
+            std::cout << std::format("{:<15}{:<20}{:<15}\n",
+                                     car->getModel(),
+                                     car->getLicensePlate(),
+                                     car->isParked() ? "Запаркован" : "Не запаркован");
         }
     }
 
@@ -306,6 +310,7 @@ void ParkingLot::displayParkingLot(bool isAdmin) {
     std::cout << std::format("Процент свободных мест: {:.2f}%\n", freePercentage);
     std::cout << std::string(50, '=') << "\n\n";
 }
+
 
 double calculateFreeSpotPercentage(const ParkingLot& lot) {
     if (lot.spots.empty()) {
