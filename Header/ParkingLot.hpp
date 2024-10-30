@@ -1,16 +1,19 @@
+// ParkingLot.hpp
 #ifndef PARKINGLOT_HPP
 #define PARKINGLOT_HPP
 
 #include <string>
 #include <vector>
 #include <memory>
+#include <format>
 #include "Car.hpp"
 #include "ParkingSpot.hpp"
-#include "DatabaseManager.hpp" // Подключаем для работы с базой данных
+#include "DatabaseManager.hpp"
 
-class ParkingLot {
+
+class ParkingLot{
 public:
-    explicit ParkingLot(std::string_view name, DatabaseManager& dbManager); // Добавлен DatabaseManager
+    explicit ParkingLot(const std::string& name, DatabaseManager& dbManager);
 
     void addCar(std::shared_ptr<Car> car);
     void removeCar(std::string_view licensePlate);
@@ -19,12 +22,12 @@ public:
     void addParkingSpot(std::shared_ptr<ParkingSpot> spot, DatabaseManager& dbManager);
     void removeParkingSpot(int spotNumber);
     ParkingSpot* getParkingSpot(int spotNumber);
-    const std::vector<std::shared_ptr<ParkingSpot> >& getParkingSpots() const;
+    const std::vector<std::shared_ptr<ParkingSpot>>& getParkingSpots() const;
 
-    void assignCarToSpot(std::string_view licensePlate, int spotNumber); 
+    void assignCarToSpot(std::string_view licensePlate, int spotNumber);
     void releaseParkingSpot(int spotNumber);
 
-    void displayParkingLot(bool isAdmin);
+    void displayParkingLot(bool isAdmin); 
 
     friend double calculateFreeSpotPercentage(const ParkingLot& lot);
 
@@ -32,14 +35,14 @@ public:
     ParkingLot& operator-=(int spotNumber);
 
 private:
-    void createTables(); // Функция для создания таблиц в базе данных
-    void loadCarsFromDatabase(); // Загрузка машин из базы данных
-    void loadParkingSpotsFromDatabase(); // Загрузка парковочных мест из базы данных
+    void createTables();
+    void loadCarsFromDatabase();
+    void loadParkingSpotsFromDatabase();
 
     std::string name;
-    std::vector<std::shared_ptr<Car> > cars;
-    std::vector<std::shared_ptr<ParkingSpot> > spots;
-    DatabaseManager& dbManager; // Ссылка на DatabaseManager для выполнения запросов
+    std::vector<std::shared_ptr<Car>> cars;
+    std::vector<std::shared_ptr<ParkingSpot>> spots;
+    DatabaseManager& dbManager;
 };
 
-#endif
+#endif 

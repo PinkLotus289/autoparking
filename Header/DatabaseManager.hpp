@@ -1,4 +1,3 @@
-// DatabaseManager.hpp
 #ifndef DATABASEMANAGER_HPP
 #define DATABASEMANAGER_HPP
 
@@ -8,7 +7,6 @@
 
 class DatabaseManager {
 public:
-    // Конструктор
     explicit DatabaseManager(const std::string& dbFile) {
         if (sqlite3_open(dbFile.c_str(), &db) != SQLITE_OK) {
             std::cerr << "Ошибка при открытии базы данных: " << sqlite3_errmsg(db) << std::endl;
@@ -17,7 +15,6 @@ public:
         }
     }
 
-    // Деструктор
     ~DatabaseManager() {
         if (db) {
             sqlite3_close(db);
@@ -25,28 +22,25 @@ public:
         }
     }
 
-    // Запрещаем копирование
     DatabaseManager(const DatabaseManager&) = delete;
     DatabaseManager& operator=(const DatabaseManager&) = delete;
 
     // Разрешаем перемещение
     DatabaseManager(DatabaseManager&& other) noexcept : db(other.db) {
-        other.db = nullptr;  // Обнуляем указатель у перемещённого объекта
+        other.db = nullptr;  
     }
 
     DatabaseManager& operator=(DatabaseManager&& other) noexcept {
         if (this != &other) {
-            // Закрываем текущее подключение, если оно существует
             if (db) {
                 sqlite3_close(db);
             }
-            db = other.db;      // Перемещаем подключение
-            other.db = nullptr;  // Обнуляем указатель у перемещённого объекта
+            db = other.db;      
+            other.db = nullptr; 
         }
         return *this;
     }
 
-    // Выполнение запроса
     bool executeQuery(const std::string& query) {
     if (char* errorMessage = nullptr;
         sqlite3_exec(db, query.c_str(), nullptr, nullptr, &errorMessage) != SQLITE_OK) {
@@ -64,4 +58,4 @@ public:
 private:
     sqlite3* db = nullptr;
 };
-#endif // DATABASEMANAGER_HPP
+#endif 
