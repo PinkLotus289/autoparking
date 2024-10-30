@@ -11,10 +11,10 @@ std::string Car::getLicensePlate() const { return licensePlate; }
 
 void Car::setParked(bool p) { parked = p; }
 
-bool Car::isParked() const { 
+bool Car::getStatus() const { 
     return parked; 
 }
 
-void Car::displayCar() const {
+void Car::display() {
     std::cout << std::format("{:<25}{:<50}{:<30}\n", model, licensePlate, parked ? "Запаркован" : "Не запаркован");
 }

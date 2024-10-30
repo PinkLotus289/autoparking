@@ -32,7 +32,7 @@ void displaySimilarFreeSpots(const std::string& size, const std::vector<std::sha
     std::cout << std::string(40, '-') << '\n';
 
     for (const auto& spot : spots) {
-        if (!spot->isOccupied() && spot->getSize() == size) {
+        if (!spot->getStatus() && spot->getSize() == size) {
             std::cout << std::format("{:<10}{:<30}\n", spot->getNumber(), spot->getSize());
         }
     }
@@ -40,7 +40,7 @@ void displaySimilarFreeSpots(const std::string& size, const std::vector<std::sha
 
 
 int main() {
-    DatabaseManager dbManager("parking_lot.db"); // Создаем объект DatabaseManager для работы с БД
+    DatabaseManager dbManager("parking_lot.db"); 
     setlocale(LC_ALL, "Russian");
 
     auto parkingLot = make_unique<ParkingLot>("Центральная парковка", dbManager); // Передаем dbManager в ParkingLot
@@ -55,12 +55,12 @@ int main() {
 
         switch (choice) {
             case 1: {
-                cout << "\nИнформация для обычного пользователя:" << endl;
+                //cout << "\nИнформация для обычного пользователя:" << endl;
                 parkingLot->displayParkingLot(false);
                 break;
             }
             case 2: {
-                cout << "\nИнформация для администратора:" << endl;
+                //cout << "\nИнформация для администратора:" << endl;
                 parkingLot->displayParkingLot(true);
                 break;
             }

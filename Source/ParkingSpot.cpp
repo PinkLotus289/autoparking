@@ -8,7 +8,8 @@ ParkingSpot::ParkingSpot(int num, const std::string& sz, bool isOccupied)
 
 int ParkingSpot::getNumber() const { return number; }
 std::string ParkingSpot::getSize() const { return size; }
-bool ParkingSpot::isOccupied() const { return occupied; }
+
+bool ParkingSpot::getStatus() const { return occupied; }
 
 void ParkingSpot::setOccupied(bool isOccupied) {
     occupied = isOccupied;
@@ -31,7 +32,7 @@ std::shared_ptr<Car> ParkingSpot::getCar() const {
     return car;
 }
 
-void ParkingSpot::displayParkingSpot() const {
+void ParkingSpot::display() {
     std::cout << std::format("{:<10}{:<30}{:<30}", number, size, occupied ? "Занято" : "Свободно");
 
     if (occupied && car) {
