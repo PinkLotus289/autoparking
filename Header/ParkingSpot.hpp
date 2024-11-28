@@ -1,37 +1,32 @@
-// ParkingSpot.hpp
 #ifndef PARKINGSPOT_HPP
 #define PARKINGSPOT_HPP
 
-#include <string>
 #include <memory>
-#include <format>
-#include "Car.hpp"
-#include "TerminalDisplay.hpp"
+#include <string>
+#include "Vehicle.hpp"
 
-class ParkingSpot : public TerminalDisplay, public GetField {
+class ParkingSpot {
 public:
     ParkingSpot(int number, const std::string& size, bool occupied = false);
 
     int getNumber() const;
     std::string getSize() const;
-    bool getStatus() const override;
+    bool getStatus() const;
 
-    void display() override; 
+    void assignVehicle(std::shared_ptr<Vehicle> vehicle);
+    void removeVehicle();
+    std::shared_ptr<Vehicle> getVehicle() const;
 
-    void setOccupied(bool isOccupied);
-
-    void assignCar(std::shared_ptr<Car> car);
-    void removeCar();
-    std::shared_ptr<Car> getCar() const;
-
+    void display() const;
     bool operator==(const ParkingSpot& other) const;
 
 private:
     int number;
     std::string size;
     bool occupied;
-    std::shared_ptr<Car> car = nullptr;
+    std::shared_ptr<Vehicle> vehicle;
 };
 
-#endif // PARKINGSPOT_HPP
+#endif
+
 

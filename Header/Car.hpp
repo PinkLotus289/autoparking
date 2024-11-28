@@ -1,24 +1,24 @@
-// Car.hpp
 #ifndef CAR_HPP
 #define CAR_HPP
 
+#include "Vehicle.hpp"
 #include <string>
 #include <iostream>
-#include <format>
-#include "TerminalDisplay.hpp"
-#include "Get.hpp"
 
-class Car : public TerminalDisplay, public GetField {
+class Car : public Vehicle {
 public:
     Car(const std::string& model, const std::string& licensePlate);
 
-    std::string getModel() const;
-    std::string getLicensePlate() const;
+    std::string getModel() const override;
+    std::string getLicensePlate() const override;
 
-    void setParked(bool parked);
+    void setParked(bool parked) override;
+
     bool getStatus() const override;
 
-    void display() override; // Реализация виртуальной функции display
+    void display() const override;
+
+    
 
 private:
     std::string model;
@@ -26,4 +26,4 @@ private:
     bool parked = false;
 };
 
-#endif // CAR_HPP
+#endif

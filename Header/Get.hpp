@@ -1,4 +1,4 @@
-// Entity.hpp
+
 #ifndef GET_HPP
 #define GET_HPP
 
