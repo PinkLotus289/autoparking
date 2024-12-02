@@ -1,6 +1,18 @@
 #include <QApplication>
 #include "../Header/MainWindow.hpp"
+#include "../Header/LoginWindow.hpp"
 
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+
+    LoginWindow loginWindow;
+    loginWindow.show();
+
+    return app.exec();
+}
+
+
+/*
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     MainWindow window;
@@ -9,3 +21,4 @@ int main(int argc, char *argv[]) {
     window.show();
     return QApplication::exec();
 }
+*/

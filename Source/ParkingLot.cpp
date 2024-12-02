@@ -244,63 +244,7 @@ ParkingLot& ParkingLot::operator-=(int spotNumber) {
     return *this;
 }
 
-/*
-void ParkingLot::assignVehicleToSpot(const std::string& licensePlate, int spotNumber) {
-    auto vehicleIt = std::find_if(vehicles.begin(), vehicles.end(),
-        [&licensePlate](const std::shared_ptr<Vehicle>& vehicle) {
-            return vehicle->getLicensePlate() == licensePlate;
-        });
 
-    if (vehicleIt == vehicles.end()) {
-        std::cerr << "Ошибка: Транспортное средство с номером " << licensePlate << " не найдено." << std::endl;
-        return;
-    }
-
-
-    auto spotIt = std::find_if(spots.begin(), spots.end(),
-        [spotNumber](const std::shared_ptr<ParkingSpot>& spot) {
-            return spot->getNumber() == spotNumber;
-        });
-
-    if (spotIt == spots.end()) {
-        std::cerr << "Ошибка: Парковочное место с номером " << spotNumber << " не найдено." << std::endl;
-        return;
-    }
-
-    auto& vehicle = *vehicleIt;
-    auto& spot = *spotIt;
-
-
-    if (spot->getStatus()) {
-        std::cerr << "Ошибка: Парковочное место с номером " << spotNumber << " уже занято." << std::endl;
-        return;
-    }
-
-
-    spot->assignVehicle(vehicle);
-    vehicle->setParked(true); 
-
-   
-    std::string updateSpotQuery = std::format(
-        "UPDATE ParkingSpots SET occupied = 1, vehicleId = '{}' WHERE number = {};",
-        licensePlate, spotNumber);
-
-    std::string updateVehicleQuery = std::format(
-        "UPDATE Vehicles SET status = 1 WHERE licensePlate = '{}';",
-        licensePlate);
-
-    if (!dbManager.executeQuery(updateSpotQuery)) {
-        std::cerr << "Ошибка: Не удалось обновить информацию о парковочном месте в базе данных." << std::endl;
-    }
-
-    if (!dbManager.executeQuery(updateVehicleQuery)) {
-        std::cerr << "Ошибка: Не удалось обновить статус транспортного средства в базе данных." << std::endl;
-    }
-
-    std::cout << "Транспортное средство с номером " << licensePlate
-              << " успешно назначено на место номер " << spotNumber << "." << std::endl;
-}
-*/
 void ParkingLot::assignVehicleToSpot(const std::string& licensePlate, int spotNumber) {
     // Находим парковочное место
     auto spotIt = std::find_if(spots.begin(), spots.end(),
@@ -416,19 +360,17 @@ ParkingSpot* ParkingLot::getParkingSpot(int spotNumber) {
 
 
 void ParkingLot::sortAndSaveSpotsToDatabase() {
-    // Шаблонная функция сортирует парковочные места по номеру
+    
     sortObjects(spots, [](const ParkingSpot& a, const ParkingSpot& b) {
         return a.getNumber() < b.getNumber();
     });
 
-    // Удаляем все записи о парковочных местах из базы данных перед загрузкой
     std::string deleteQuery = "DELETE FROM ParkingSpots;";
     if (!dbManager.executeQuery(deleteQuery)) {
         std::cerr << "Ошибка: Не удалось очистить таблицу ParkingSpots в базе данных." << std::endl;
         return;
     }
 
-    // Загружаем отсортированные парковочные места в базу данных
     for (const auto& spot : spots) {
         std::string insertQuery = std::format(
             "INSERT INTO ParkingSpots (number, size, occupied, vehicleId) VALUES ({}, '{}', {}, {});",

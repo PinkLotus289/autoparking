@@ -6,6 +6,7 @@
 #include <QTextEdit>
 #include <QInputDialog>
 #include <QLineEdit>
+#include <QHeaderView>
 #include <iostream>
 #include <memory>
 #include "../Header/Car.hpp"
@@ -39,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
     auto *sortSpotsButton = new QPushButton("Отсортировать парковочные места", this);
     auto *enqueueButton = new QPushButton("Поставить в очередь", this);
     auto *parkFromQueueButton = new QPushButton("Запарковать из очереди", this);
+    auto *returnButton = new QPushButton("Вернуться в начальное меню", this);
     
     
     layout->addWidget(displayButtonUser);
@@ -52,11 +54,20 @@ MainWindow::MainWindow(QWidget *parent)
     layout->addWidget(sortSpotsButton);
     layout->addWidget(enqueueButton);
     layout->addWidget(parkFromQueueButton);
+    layout->addWidget(returnButton);
 
     
-    infoDisplay = new QTextEdit(this);
-    infoDisplay->setReadOnly(true);
-    layout->addWidget(infoDisplay);
+    // Создаём таблицу для автомобилей
+    vehicleTable = new QTableWidget(this);
+    setupVehicleTable();
+    layout->addWidget(new QLabel("Автомобили", this));
+    layout->addWidget(vehicleTable);
+
+    // Создаём таблицу для парковочных мест
+    spotTable = new QTableWidget(this);
+    setupSpotTable();
+    layout->addWidget(new QLabel("Парковочные места", this));
+    layout->addWidget(spotTable);
 
     setCentralWidget(centralWidget);
 
@@ -72,24 +83,67 @@ MainWindow::MainWindow(QWidget *parent)
     connect(sortSpotsButton, &QPushButton::clicked, this, &MainWindow::sortAndSaveSpotsToDatabase);
     connect(enqueueButton, &QPushButton::clicked, this, &MainWindow::enqueueVehicle);
     connect(parkFromQueueButton, &QPushButton::clicked, this, &MainWindow::parkVehicleFromQueue);
+    connect(returnButton, &QPushButton::clicked, this, &MainWindow::onReturnToMenuClicked);
 }
 
 MainWindow::~MainWindow() {
     sqlite3_close(db);
 }
 
+void MainWindow::setupVehicleTable() {
+    vehicleTable->setColumnCount(4);
+    vehicleTable->setHorizontalHeaderLabels({"Марка авто", "Регистрационный номер", "Статус", "Номер места"});
+    vehicleTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    vehicleTable->verticalHeader()->setVisible(false);
+    vehicleTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    vehicleTable->setSelectionMode(QAbstractItemView::NoSelection);
+}
+
+void MainWindow::setupSpotTable() {
+    spotTable->setColumnCount(4);
+    spotTable->setHorizontalHeaderLabels({"Номер места", "Размер", "Статус", "Номер авто"});
+    spotTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    spotTable->verticalHeader()->setVisible(false);
+    spotTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    spotTable->setSelectionMode(QAbstractItemView::NoSelection);
+}
+
 
 void MainWindow::displayParkingInfoUser() {
-    QString info = "Информация о парковке для пользователей:\n";
-    info += generateParkingInfo(false);
-    infoDisplay->setText(info);
+    // Очистка таблицы парковочных мест
+    spotTable->setRowCount(0);
+    vehicleTable->setRowCount(0);
+
+    int row = 0;
+
+    // Сначала добавляем строку с процентом свободных мест
+    double freePercentage = calculateFreeSpotPercentage(*parkingLot);
+    spotTable->insertRow(row);
+    spotTable->setItem(row, 0, new QTableWidgetItem("Процент свободных мест:"));
+    spotTable->setItem(row, 1, new QTableWidgetItem(QString::number(freePercentage, 'f', 2) + " %"));
+    spotTable->setSpan(row, 1, 1, 3); // Объединяем ячейки для текста
+    row++;
+
+    // Затем выводим список свободных мест
+    for (const auto &spot : parkingLot->getSpots()) {
+        if (!spot->getStatus()) { // Условие: только свободные места
+            spotTable->insertRow(row);
+
+            // Номер места
+            spotTable->setItem(row, 0, new QTableWidgetItem(QString::number(spot->getNumber())));
+            // Размер
+            spotTable->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(spot->getSize())));
+            // Статус
+            spotTable->setItem(row, 2, new QTableWidgetItem("Свободно"));
+            // Номер авто (для свободных мест всегда "Нет")
+            spotTable->setItem(row, 3, new QTableWidgetItem("Нет"));
+
+            row++;
+        }
+    }
 }
 
-void MainWindow::displayParkingInfoAdmin() {
-    QString info = "Информация о парковке для администратора:\n";
-    info += generateParkingInfo(true);
-    infoDisplay->setText(info);
-}
+
 
 QString MainWindow::generateParkingInfo(bool isAdmin) {
     QString info;
@@ -209,14 +263,14 @@ void MainWindow::enqueueVehicle() {
 
         auto car = std::make_shared<Car>(model.toStdString(), licensePlate.toStdString());
         carQueue.enqueue(car);
-        infoDisplay->append("Легковой автомобиль добавлен в очередь.");
+        QMessageBox::information(this, "Очередь", "Легковой автомобиль добавлен в очередь.");
     } else if (type == "Грузовой автомобиль") {
         QString cargoType = QInputDialog::getText(this, "Поставить в очередь", "Введите тип груза:", QLineEdit::Normal, "", &ok);
         if (!ok || cargoType.isEmpty()) return;
 
         auto truck = std::make_shared<Truck>(cargoType.toStdString(), licensePlate.toStdString());
         truckQueue.enqueue(truck);
-        infoDisplay->append("Грузовой автомобиль добавлен в очередь.");
+        QMessageBox::information(this, "Очередь", "Грузовой автомобиль добавлен в очередь.");
     }
 }
 
@@ -224,18 +278,15 @@ void MainWindow::parkVehicleFromQueue() {
     QStringList queues = {"Очередь легковых автомобилей", "Очередь грузовых автомобилей"};
     bool ok;
 
-    // Выбор очереди
     QString queueType = QInputDialog::getItem(this, "Запарковать автомобиль", "Выберите очередь:", queues, 0, false, &ok);
     if (!ok || queueType.isEmpty()) return;
 
-    // Ввод номера парковочного места
     int spotNumber = QInputDialog::getInt(this, "Запарковать автомобиль", "Введите номер парковочного места:", 1, 1, 10000, 1, &ok);
     if (!ok) return;
 
     try {
         std::shared_ptr<Vehicle> vehicle;
 
-        // Извлекаем автомобиль из соответствующей очереди
         if (queueType == "Очередь легковых автомобилей") {
             if (carQueue.isEmpty()) {
                 QMessageBox::warning(this, "Ошибка", "Очередь легковых автомобилей пуста.");
@@ -250,7 +301,6 @@ void MainWindow::parkVehicleFromQueue() {
             vehicle = truckQueue.dequeue();
         }
 
-        // Добавляем автомобиль в базу данных
         std::string type = std::dynamic_pointer_cast<Car>(vehicle) ? "Car" : "Truck";
         std::string insertVehicleQuery = std::format(
             "INSERT INTO Vehicles (type, model, licensePlate, status) VALUES ('{}', '{}', '{}', 0);",
@@ -261,16 +311,77 @@ void MainWindow::parkVehicleFromQueue() {
             throw std::runtime_error("Ошибка при добавлении автомобиля в базу данных.");
         }
 
-        // Обновляем данные в памяти
         parkingLot->loadVehiclesFromDatabase();
 
-        // Привязываем автомобиль к парковочному месту
         parkingLot->assignVehicleToSpot(vehicle->getLicensePlate(), spotNumber);
 
-        infoDisplay->append(QString("Автомобиль с номером %1 запаркован на месте %2.")
-                            .arg(QString::fromStdString(vehicle->getLicensePlate()))
-                            .arg(spotNumber));
+        QMessageBox::information(this, "Успех", QString("Автомобиль с номером %1 запаркован на месте %2.")
+                                            .arg(QString::fromStdString(vehicle->getLicensePlate()))
+                                            .arg(spotNumber));
     } catch (const std::exception& e) {
         QMessageBox::warning(this, "Ошибка", e.what());
     }
 }
+
+void MainWindow::onReturnToMenuClicked() {
+    emit returnToLogin(); // Сигнал для возврата в LoginWindow
+    close(); // Закрыть текущее окно
+}
+
+void MainWindow::displayParkingInfoAdmin() {
+    // Очистка таблиц
+    vehicleTable->setRowCount(0);
+    spotTable->setRowCount(0);
+
+    int vehicleRow = 0;
+    int spotRow = 0;
+
+    // Вывод автомобилей
+    for (const auto &vehicle : parkingLot->getVehicles()) {
+        vehicleTable->insertRow(vehicleRow);
+
+        // Марка авто
+        vehicleTable->setItem(vehicleRow, 0, new QTableWidgetItem(QString::fromStdString(vehicle->getModel())));
+        // Регистрационный номер
+        vehicleTable->setItem(vehicleRow, 1, new QTableWidgetItem(QString::fromStdString(vehicle->getLicensePlate())));
+        // Статус
+        vehicleTable->setItem(vehicleRow, 2, new QTableWidgetItem(vehicle->getStatus() ? "Запаркована" : "Не запаркована"));
+        // Номер места
+        QString spotNumber = "Нет";
+        for (const auto &spot : parkingLot->getSpots()) {
+            if (spot->getVehicle() && spot->getVehicle()->getLicensePlate() == vehicle->getLicensePlate()) {
+                spotNumber = QString::number(spot->getNumber());
+                break;
+            }
+        }
+        vehicleTable->setItem(vehicleRow, 3, new QTableWidgetItem(spotNumber));
+
+        vehicleRow++;
+    }
+
+    // Вывод парковочных мест
+    double freePercentage = calculateFreeSpotPercentage(*parkingLot);
+
+    // Добавляем строку с процентом свободных мест
+    spotTable->insertRow(spotRow);
+    spotTable->setItem(spotRow, 0, new QTableWidgetItem("Процент свободных мест:"));
+    spotTable->setItem(spotRow, 1, new QTableWidgetItem(QString::number(freePercentage, 'f', 2) + " %"));
+    spotTable->setSpan(spotRow, 1, 1, 3); // Объединяем ячейки для текста
+    spotRow++;
+
+    for (const auto &spot : parkingLot->getSpots()) {
+        spotTable->insertRow(spotRow);
+
+        // Номер места
+        spotTable->setItem(spotRow, 0, new QTableWidgetItem(QString::number(spot->getNumber())));
+        // Размер
+        spotTable->setItem(spotRow, 1, new QTableWidgetItem(QString::fromStdString(spot->getSize())));
+        // Статус
+        spotTable->setItem(spotRow, 2, new QTableWidgetItem(spot->getStatus() ? "Занято" : "Свободно"));
+        // Номер авто
+        spotTable->setItem(spotRow, 3, new QTableWidgetItem(spot->getVehicle() ? QString::fromStdString(spot->getVehicle()->getLicensePlate()) : "Нет"));
+
+        spotRow++;
+    }
+}
+
