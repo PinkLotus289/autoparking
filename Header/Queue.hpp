@@ -32,4 +32,4 @@ private:
     std::queue<T> queue;
 };
 
-#endif // QUEUE_HPP
+#endif 

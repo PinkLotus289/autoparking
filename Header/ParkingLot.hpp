@@ -49,7 +49,7 @@ private:
 };
 
 template <typename T, typename Compare>
-void sortObjects(std::vector<std::shared_ptr<T>>& objects, Compare comp) {
+void sortObjects(std::vector<std::shared_ptr<T> >& objects, Compare comp) {
     std::sort(objects.begin(), objects.end(), [&](const std::shared_ptr<T>& a, const std::shared_ptr<T>& b) {
         return comp(*a, *b);
     });
