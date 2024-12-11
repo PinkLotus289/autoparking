@@ -9,7 +9,9 @@ public:
     virtual ~Vehicle() = default;
 
     virtual std::string getModel() const = 0;
+
     virtual std::string getLicensePlate() const = 0;
+    
     virtual bool getStatus() const = 0; 
 
     virtual void display() const = 0;

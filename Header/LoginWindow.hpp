@@ -18,7 +18,7 @@ public:
 
 private slots:
     void openAdminPanel();
-    void openUserView(); // Обновлённая функция для отображения парковочных мест
+    void openUserView(); 
     void returnToMenu();
 
 private:
@@ -27,8 +27,8 @@ private:
     QTextEdit *infoDisplay;
     QTableWidget *infoTable;
 
-    std::unique_ptr<ParkingLot> parkingLot; // Хранение объекта парковки
-    DatabaseManager dbManager;              // Менеджер базы данных
+    std::unique_ptr<ParkingLot> parkingLot; 
+    DatabaseManager dbManager;              
 
     const QString adminPassword = "admin123";
 

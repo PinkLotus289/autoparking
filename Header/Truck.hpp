@@ -10,9 +10,11 @@ public:
     Truck(const std::string& cargoType, const std::string& licensePlate);
 
     std::string getModel() const override;
+    
     std::string getLicensePlate() const override;
 
     void setLoaded(bool loaded);
+
     bool getStatus() const override;
 
     void setParked(bool parked) override;

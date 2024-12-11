@@ -4,12 +4,15 @@
 #include <QMainWindow>
 #include <QTableWidget>
 #include <QTextEdit>
+#include <QPushButton>
 #include <memory>
 #include "ParkingLot.hpp"
 #include "DatabaseManager.hpp"
 #include "Queue.hpp"
 #include "Car.hpp"
 #include "Truck.hpp"
+#include "FilterCriteria.hpp"
+#include "ExportManager.hpp"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -34,10 +37,12 @@ private slots:
     void enqueueVehicle();
     void parkVehicleFromQueue();
     void onReturnToMenuClicked();
+    void exportData();
+    FilterCriteria getFilterCriteriaFromUI();
 
 private:
-    QTableWidget *vehicleTable;  // Таблица для автомобилей
-    QTableWidget *spotTable;     // Таблица для парковочных мест
+    QTableWidget *vehicleTable;  
+    QTableWidget *spotTable;     
     sqlite3 *db;
     DatabaseManager dbManager;
     std::unique_ptr<ParkingLot> parkingLot;
@@ -48,9 +53,16 @@ private:
     Queue<std::shared_ptr<Car>> carQueue;
     Queue<std::shared_ptr<Truck>> truckQueue;
 
-    void setupVehicleTable(); // Настройка таблицы для автомобилей
-    void setupSpotTable();    // Настройка таблицы для парковочных мест
+    void setupVehicleTable(); 
+    void setupSpotTable();   
+
+    QPushButton *exportButton; // Кнопка для экспорта отчета
+    ExportManager exportManager; // Объект менеджера экспорта
+
+    void setupUI(); // Функция для настройки интерфейса
 };
 
 #endif 
+
+
 

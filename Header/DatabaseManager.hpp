@@ -51,7 +51,22 @@ public:
     return true;
     }
 
+    bool isVehicleInDatabase(const std::string& licensePlate) {
+    std::string query = "SELECT COUNT(*) FROM Vehicles WHERE licensePlate = '" + licensePlate + "';";
+    sqlite3_stmt* stmt;
+    bool exists = false;
 
+    if (sqlite3_prepare_v2(db, query.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            exists = sqlite3_column_int(stmt, 0) > 0;
+        }
+        sqlite3_finalize(stmt);
+    } else {
+        std::cerr << "Ошибка SQL при проверке дублирования: " << sqlite3_errmsg(db) << std::endl;
+    }
+
+    return exists;
+    }
 
     sqlite3* getDB() const { return db; }
 

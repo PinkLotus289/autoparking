@@ -25,7 +25,7 @@ public:
     const std::vector<std::shared_ptr<ParkingSpot> >& getSpots() const;
     friend double calculateFreeSpotPercentage(const ParkingLot& lot);
 
-    void assignVehicleToSpot(const std::string& licensePlate, int spotNumber);
+    void assignVehicleToSpot(const std::string& licensePlate, int spotNumber, const std::string& parkingTime = "");
     void releaseParkingSpot(int spotNumber);
 
     void displayParkingLot(bool isAdmin) const;
@@ -46,6 +46,8 @@ private:
     std::vector<std::shared_ptr<Vehicle> > vehicles;
     std::vector<std::shared_ptr<ParkingSpot> > spots;
     DatabaseManager& dbManager;
+
+    const double hourlyRate = 5.0; 
 };
 
 template <typename T, typename Compare>
