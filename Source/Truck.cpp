@@ -23,7 +23,6 @@ void Truck::setParked(bool parked) {
     this->loaded = parked; 
 }
 
-
 void Truck::display() const {
     std::cout << std::format("Truck: {:<15} {:<15} {:<20}\n", cargoType, licensePlate, loaded ? "Загружен" : "Пустой");
 }

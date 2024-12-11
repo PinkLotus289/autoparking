@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <format>
+#include <optional>
 
 ParkingSpot::ParkingSpot(int num, const std::string& sz, bool isOccupied)
     : number(num), size(sz), occupied(isOccupied) {}
@@ -35,4 +36,17 @@ void ParkingSpot::display() const {
 
 bool ParkingSpot::operator==(const ParkingSpot& other) const {
     return this->number == other.number && this->size == other.size;
+}
+/*
+void ParkingSpot::setParkingTime(const std::string& time) {
+    parkingTime = time;
+}*/
+
+void ParkingSpot::setParkingTime(const std::optional<std::string>& time) {
+    parkingTime = time;
+}
+
+
+std::optional<std::string> ParkingSpot::getParkingTime() const {
+    return parkingTime;
 }

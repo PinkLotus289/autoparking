@@ -7,11 +7,16 @@
 #include <QInputDialog>
 #include <QLineEdit>
 #include <QHeaderView>
+#include <QDateTime>
+#include <QFileDialog>
 #include <iostream>
 #include <memory>
 #include "../Header/Car.hpp"
 #include "../Header/Truck.hpp" 
 #include "../Header/Truck.hpp"
+#include "../Header/InputValidator.hpp"
+#include "../Header/ExportManager.hpp"
+#include "../Header/FilterCriteria.hpp"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), dbManager("../parking_lot.db") {
@@ -57,20 +62,23 @@ MainWindow::MainWindow(QWidget *parent)
     layout->addWidget(returnButton);
 
     
-    // Создаём таблицу для автомобилей
     vehicleTable = new QTableWidget(this);
     setupVehicleTable();
     layout->addWidget(new QLabel("Автомобили", this));
     layout->addWidget(vehicleTable);
 
-    // Создаём таблицу для парковочных мест
+    
     spotTable = new QTableWidget(this);
     setupSpotTable();
     layout->addWidget(new QLabel("Парковочные места", this));
     layout->addWidget(spotTable);
 
-    setCentralWidget(centralWidget);
+    auto *exportButton = new QPushButton("Скачать отчет", this);
+    layout->addWidget(exportButton);
+    connect(exportButton, &QPushButton::clicked, this, &MainWindow::exportData);
 
+
+    setCentralWidget(centralWidget);
     
     connect(displayButtonUser, &QPushButton::clicked, this, &MainWindow::displayParkingInfoUser);
     connect(displayButtonAdmin, &QPushButton::clicked, this, &MainWindow::displayParkingInfoAdmin);
@@ -98,7 +106,7 @@ void MainWindow::setupVehicleTable() {
     vehicleTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     vehicleTable->setSelectionMode(QAbstractItemView::NoSelection);
 }
-
+ 
 void MainWindow::setupSpotTable() {
     spotTable->setColumnCount(4);
     spotTable->setHorizontalHeaderLabels({"Номер места", "Размер", "Статус", "Номер авто"});
@@ -110,32 +118,30 @@ void MainWindow::setupSpotTable() {
 
 
 void MainWindow::displayParkingInfoUser() {
-    // Очистка таблицы парковочных мест
+    
     spotTable->setRowCount(0);
     vehicleTable->setRowCount(0);
 
     int row = 0;
 
-    // Сначала добавляем строку с процентом свободных мест
     double freePercentage = calculateFreeSpotPercentage(*parkingLot);
     spotTable->insertRow(row);
     spotTable->setItem(row, 0, new QTableWidgetItem("Процент свободных мест:"));
     spotTable->setItem(row, 1, new QTableWidgetItem(QString::number(freePercentage, 'f', 2) + " %"));
-    spotTable->setSpan(row, 1, 1, 3); // Объединяем ячейки для текста
+    spotTable->setSpan(row, 1, 1, 3); 
     row++;
 
-    // Затем выводим список свободных мест
+
     for (const auto &spot : parkingLot->getSpots()) {
-        if (!spot->getStatus()) { // Условие: только свободные места
+        if (!spot->getStatus()) { 
             spotTable->insertRow(row);
 
-            // Номер места
             spotTable->setItem(row, 0, new QTableWidgetItem(QString::number(spot->getNumber())));
-            // Размер
+            
             spotTable->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(spot->getSize())));
-            // Статус
+            
             spotTable->setItem(row, 2, new QTableWidgetItem("Свободно"));
-            // Номер авто (для свободных мест всегда "Нет")
+            
             spotTable->setItem(row, 3, new QTableWidgetItem("Нет"));
 
             row++;
@@ -173,17 +179,39 @@ QString MainWindow::generateParkingInfo(bool isAdmin) {
 
 
 void MainWindow::addParkingSpot() {
-    bool ok;
-    int number = QInputDialog::getInt(this, "Добавить парковочное место", "Введите номер:", 1, 1, 10000, 1, &ok);
-    if (!ok) return;
+    try {
 
-    QString size = QInputDialog::getText(this, "Добавить парковочное место", "Введите размер:", QLineEdit::Normal, "маленький", &ok);
-    if (!ok || size.isEmpty()) return;
+        int number = InputValidator::getValidatedSpotNumber(this, 1, 10000);
 
-    auto spot = std::make_shared<ParkingSpot>(number, size.toStdString(), false);
-    parkingLot->addParkingSpot(spot, dbManager);
+        QStringList sizes = {"Легковое", "Грузовое"};
 
+        bool ok;
+        QString size = QInputDialog::getItem(
+            this,
+            "Добавить парковочное место",
+            "Выберите размер места:",
+            sizes,
+            0,
+            false,
+            &ok
+        );
+
+        if (!ok || size.isEmpty()) {
+            QMessageBox::warning(this, "Ошибка", "Размер места не указан. Операция отменена.");
+            return;
+        }
+
+        auto spot = std::make_shared<ParkingSpot>(number, size.toStdString(), false);
+        parkingLot->addParkingSpot(spot, dbManager);
+
+        QMessageBox::information(this, "Успех", "Парковочное место успешно добавлено.");
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, "Ошибка", e.what());
+    }
 }
+
+
+
 
 void MainWindow::removeParkingSpot() {
     bool ok;
@@ -194,16 +222,37 @@ void MainWindow::removeParkingSpot() {
     parkingLot->removeParkingSpot(spotNumber);
 }
 
+
 void MainWindow::assignVehicleToSpot() {
-    bool ok;
-    QString licensePlate = QInputDialog::getText(this, "Назначить транспорт", "Введите номерной знак:", QLineEdit::Normal, "", &ok);
-    if (!ok || licensePlate.isEmpty()) return;
+    try {
+        
+        QString licensePlate = InputValidator::getValidatedLicensePlate(this);
 
-    int spotNumber = QInputDialog::getInt(this, "Назначить транспорт", "Введите номер места:", 1, 1, 10000, 1, &ok);
-    if (!ok) return;
+        int spotNumber = InputValidator::getValidatedSpotNumber(this, 1, 10000);
 
-    parkingLot->assignVehicleToSpot(licensePlate.toStdString(), spotNumber);
+        QStringList options = {"Указать вручную", "Указать автоматически"};
+        bool ok;
+        QString choice = QInputDialog::getItem(this, "Ввод времени парковки", "Выберите способ указания времени:", options, 0, false, &ok);
+        if (!ok) return;
+
+        QString parkingTime;
+        if (choice == "Указать вручную") {
+            parkingTime = InputValidator::getValidatedTime(this);
+            if (parkingTime.isEmpty()) {
+                QMessageBox::warning(this, "Ошибка", "Неверный формат времени. Парковка отменена.");
+                return;
+            }
+        } else {
+            parkingTime = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
+        }
+
+        parkingLot->assignVehicleToSpot(licensePlate.toStdString(), spotNumber, parkingTime.toStdString());
+        QMessageBox::information(this, "Успех", "Автомобиль успешно запаркован.");
+    } catch (const std::runtime_error& e) {
+        QMessageBox::critical(this, "Ошибка", e.what());
+    }
 }
+
 
 void MainWindow::addVehicle() {
     QStringList types = {"Автомобиль", "Грузовик"};
@@ -211,37 +260,64 @@ void MainWindow::addVehicle() {
     QString type = QInputDialog::getItem(this, "Добавить транспортное средство", "Выберите тип:", types, 0, false, &ok);
     if (!ok || type.isEmpty()) return;
 
-    QString licensePlate = QInputDialog::getText(this, "Добавить транспортное средство", "Введите номерной знак:", QLineEdit::Normal, "", &ok);
-    if (!ok || licensePlate.isEmpty()) return;
+    try {
+        QString licensePlate = InputValidator::getValidatedLicensePlate(this);
 
-    std::shared_ptr<Vehicle> vehicle;
-    if (type == "Автомобиль") {
-        QString model = QInputDialog::getText(this, "Добавить автомобиль", "Введите модель:", QLineEdit::Normal, "", &ok);
-        if (!ok || model.isEmpty()) return;
-        vehicle = std::make_shared<Car>(model.toStdString(), licensePlate.toStdString());
-    } else if (type == "Грузовик") {
-        QString cargo = QInputDialog::getText(this, "Добавить грузовик", "Введите тип груза:", QLineEdit::Normal, "", &ok);
-        if (!ok || cargo.isEmpty()) return;
-        vehicle = std::make_shared<Truck>(cargo.toStdString(), licensePlate.toStdString());
+        if (InputValidator::isVehicleInMemory(licensePlate.toStdString(), parkingLot->getVehicles())) {
+            QMessageBox::warning(this, "Ошибка", "Автомобиль с таким номерным знаком уже существует в памяти.");
+            return;
+        }
+
+        if (parkingLot->getDatabaseManager().isVehicleInDatabase(licensePlate.toStdString())) {
+            QMessageBox::warning(this, "Ошибка", "Автомобиль с таким номерным знаком уже существует в базе данных.");
+            return;
+        }
+
+        std::shared_ptr<Vehicle> vehicle;
+        if (type == "Автомобиль") {
+            QString model = QInputDialog::getText(this, "Добавить автомобиль", "Введите модель:", QLineEdit::Normal, "", &ok);
+            if (!ok || model.isEmpty()) return;
+            vehicle = std::make_shared<Car>(model.toStdString(), licensePlate.toStdString());
+        } else if (type == "Грузовик") {
+            QString cargo = QInputDialog::getText(this, "Добавить грузовик", "Введите тип груза:", QLineEdit::Normal, "", &ok);
+            if (!ok || cargo.isEmpty()) return;
+            vehicle = std::make_shared<Truck>(cargo.toStdString(), licensePlate.toStdString());
+        }
+
+        parkingLot->addVehicle(vehicle);
+        QMessageBox::information(this, "Успех", "Транспортное средство успешно добавлено.");
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, "Ошибка", e.what());
     }
-
-    parkingLot->addVehicle(vehicle);
 }
+
+
 
 void MainWindow::removeVehicle() {
-    bool ok;
-    QString licensePlate = QInputDialog::getText(this, "Удалить транспортное средство", "Введите номерной знак:", QLineEdit::Normal, "", &ok);
-    if (!ok || licensePlate.isEmpty()) return;
+    try {
+        QString licensePlate = InputValidator::getValidatedLicensePlate(this);
 
-    parkingLot->removeVehicle(licensePlate.toStdString());
+        // Удаление транспортного средства
+        parkingLot->removeVehicle(licensePlate.toStdString());
+
+        QMessageBox::information(this, "Успех", "Транспортное средство успешно удалено. Связанное парковочное место освобождено.");
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, "Ошибка", e.what());
+    }
 }
 
-void MainWindow::releaseParkingSpot() {
-    bool ok;
-    int spotNumber = QInputDialog::getInt(this, "Освободить место", "Введите номер:", 1, 1, 10000, 1, &ok);
-    if (!ok) return;
 
-    parkingLot->releaseParkingSpot(spotNumber);
+
+void MainWindow::releaseParkingSpot() {
+    try {
+        int spotNumber = InputValidator::getValidatedSpotNumber(this, 1, 10000);
+
+        parkingLot->releaseParkingSpot(spotNumber);
+
+        QMessageBox::information(this, "Успех", "Парковочное место успешно освобождено.");
+    } catch (const std::runtime_error& e) {
+        QMessageBox::critical(this, "Ошибка", e.what());
+    }
 }
 
 void MainWindow::sortAndSaveSpotsToDatabase() {
@@ -249,57 +325,64 @@ void MainWindow::sortAndSaveSpotsToDatabase() {
 }
 
 void MainWindow::enqueueVehicle() {
-    QStringList types = {"Легковой автомобиль", "Грузовой автомобиль"};
-    bool ok;
-    QString type = QInputDialog::getItem(this, "Поставить в очередь", "Выберите тип автомобиля:", types, 0, false, &ok);
-    if (!ok || type.isEmpty()) return;
+    try {
+        QStringList types = {"Легковой автомобиль", "Грузовой автомобиль"};
+        bool ok;
+        QString type = QInputDialog::getItem(this, "Поставить в очередь", "Выберите тип автомобиля:", types, 0, false, &ok);
+        if (!ok || type.isEmpty()) return;
 
-    QString licensePlate = QInputDialog::getText(this, "Поставить в очередь", "Введите номерной знак:", QLineEdit::Normal, "", &ok);
-    if (!ok || licensePlate.isEmpty()) return;
+        QString licensePlate = InputValidator::getValidatedLicensePlate(this);
 
-    if (type == "Легковой автомобиль") {
-        QString model = QInputDialog::getText(this, "Поставить в очередь", "Введите модель автомобиля:", QLineEdit::Normal, "", &ok);
-        if (!ok || model.isEmpty()) return;
+        if (type == "Легковой автомобиль") {
+            QString model = QInputDialog::getText(this, "Поставить в очередь", "Введите модель автомобиля:", QLineEdit::Normal, "", &ok);
+            if (!ok || model.isEmpty()) throw std::runtime_error("Модель автомобиля не может быть пустой.");
 
-        auto car = std::make_shared<Car>(model.toStdString(), licensePlate.toStdString());
-        carQueue.enqueue(car);
-        QMessageBox::information(this, "Очередь", "Легковой автомобиль добавлен в очередь.");
-    } else if (type == "Грузовой автомобиль") {
-        QString cargoType = QInputDialog::getText(this, "Поставить в очередь", "Введите тип груза:", QLineEdit::Normal, "", &ok);
-        if (!ok || cargoType.isEmpty()) return;
+            auto car = std::make_shared<Car>(model.toStdString(), licensePlate.toStdString());
+            carQueue.enqueue(car);
+            QMessageBox::information(this, "Очередь", "Легковой автомобиль добавлен в очередь.");
+        } else if (type == "Грузовой автомобиль") {
+            QString cargoType = QInputDialog::getText(this, "Поставить в очередь", "Введите тип груза:", QLineEdit::Normal, "", &ok);
+            if (!ok || cargoType.isEmpty()) throw std::runtime_error("Тип груза не может быть пустым.");
 
-        auto truck = std::make_shared<Truck>(cargoType.toStdString(), licensePlate.toStdString());
-        truckQueue.enqueue(truck);
-        QMessageBox::information(this, "Очередь", "Грузовой автомобиль добавлен в очередь.");
+            auto truck = std::make_shared<Truck>(cargoType.toStdString(), licensePlate.toStdString());
+            truckQueue.enqueue(truck);
+            QMessageBox::information(this, "Очередь", "Грузовой автомобиль добавлен в очередь.");
+        }
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, "Ошибка", e.what());
     }
 }
 
+
 void MainWindow::parkVehicleFromQueue() {
-    QStringList queues = {"Очередь легковых автомобилей", "Очередь грузовых автомобилей"};
-    bool ok;
-
-    QString queueType = QInputDialog::getItem(this, "Запарковать автомобиль", "Выберите очередь:", queues, 0, false, &ok);
-    if (!ok || queueType.isEmpty()) return;
-
-    int spotNumber = QInputDialog::getInt(this, "Запарковать автомобиль", "Введите номер парковочного места:", 1, 1, 10000, 1, &ok);
-    if (!ok) return;
-
     try {
-        std::shared_ptr<Vehicle> vehicle;
+        QStringList queues = {"Очередь легковых автомобилей", "Очередь грузовых автомобилей"};
+        bool ok;
+        QString queueType = QInputDialog::getItem(this, "Запарковать автомобиль", "Выберите очередь:", queues, 0, false, &ok);
+        if (!ok || queueType.isEmpty()) return;
 
+        
+        int spotNumber = InputValidator::getValidatedSpotNumber(this, 1, 10000);
+
+        
+        std::shared_ptr<Vehicle> vehicle;
         if (queueType == "Очередь легковых автомобилей") {
             if (carQueue.isEmpty()) {
-                QMessageBox::warning(this, "Ошибка", "Очередь легковых автомобилей пуста.");
-                return;
+                throw std::runtime_error("Очередь легковых автомобилей пуста.");
             }
             vehicle = carQueue.dequeue();
         } else if (queueType == "Очередь грузовых автомобилей") {
             if (truckQueue.isEmpty()) {
-                QMessageBox::warning(this, "Ошибка", "Очередь грузовых автомобилей пуста.");
-                return;
+                throw std::runtime_error("Очередь грузовых автомобилей пуста.");
             }
             vehicle = truckQueue.dequeue();
         }
+
+        
+        if (parkingLot->getDatabaseManager().isVehicleInDatabase(vehicle->getLicensePlate())) {
+            throw std::runtime_error("Автомобиль с таким номерным знаком уже существует в базе данных.");
+        }
+
 
         std::string type = std::dynamic_pointer_cast<Car>(vehicle) ? "Car" : "Truck";
         std::string insertVehicleQuery = std::format(
@@ -313,40 +396,41 @@ void MainWindow::parkVehicleFromQueue() {
 
         parkingLot->loadVehiclesFromDatabase();
 
-        parkingLot->assignVehicleToSpot(vehicle->getLicensePlate(), spotNumber);
+
+        QString parkingTime = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
+        parkingLot->assignVehicleToSpot(vehicle->getLicensePlate(), spotNumber, parkingTime.toStdString());
 
         QMessageBox::information(this, "Успех", QString("Автомобиль с номером %1 запаркован на месте %2.")
                                             .arg(QString::fromStdString(vehicle->getLicensePlate()))
                                             .arg(spotNumber));
     } catch (const std::exception& e) {
-        QMessageBox::warning(this, "Ошибка", e.what());
+        QMessageBox::critical(this, "Ошибка", e.what());
     }
 }
 
 void MainWindow::onReturnToMenuClicked() {
-    emit returnToLogin(); // Сигнал для возврата в LoginWindow
-    close(); // Закрыть текущее окно
+    emit returnToLogin(); 
+    close(); 
 }
 
 void MainWindow::displayParkingInfoAdmin() {
-    // Очистка таблиц
+
     vehicleTable->setRowCount(0);
     spotTable->setRowCount(0);
 
     int vehicleRow = 0;
     int spotRow = 0;
 
-    // Вывод автомобилей
+
     for (const auto &vehicle : parkingLot->getVehicles()) {
         vehicleTable->insertRow(vehicleRow);
 
-        // Марка авто
         vehicleTable->setItem(vehicleRow, 0, new QTableWidgetItem(QString::fromStdString(vehicle->getModel())));
-        // Регистрационный номер
+
         vehicleTable->setItem(vehicleRow, 1, new QTableWidgetItem(QString::fromStdString(vehicle->getLicensePlate())));
-        // Статус
+ 
         vehicleTable->setItem(vehicleRow, 2, new QTableWidgetItem(vehicle->getStatus() ? "Запаркована" : "Не запаркована"));
-        // Номер места
+
         QString spotNumber = "Нет";
         for (const auto &spot : parkingLot->getSpots()) {
             if (spot->getVehicle() && spot->getVehicle()->getLicensePlate() == vehicle->getLicensePlate()) {
@@ -359,29 +443,84 @@ void MainWindow::displayParkingInfoAdmin() {
         vehicleRow++;
     }
 
-    // Вывод парковочных мест
     double freePercentage = calculateFreeSpotPercentage(*parkingLot);
 
-    // Добавляем строку с процентом свободных мест
     spotTable->insertRow(spotRow);
     spotTable->setItem(spotRow, 0, new QTableWidgetItem("Процент свободных мест:"));
     spotTable->setItem(spotRow, 1, new QTableWidgetItem(QString::number(freePercentage, 'f', 2) + " %"));
-    spotTable->setSpan(spotRow, 1, 1, 3); // Объединяем ячейки для текста
+    spotTable->setSpan(spotRow, 1, 1, 3); 
     spotRow++;
 
     for (const auto &spot : parkingLot->getSpots()) {
         spotTable->insertRow(spotRow);
 
-        // Номер места
         spotTable->setItem(spotRow, 0, new QTableWidgetItem(QString::number(spot->getNumber())));
-        // Размер
+
         spotTable->setItem(spotRow, 1, new QTableWidgetItem(QString::fromStdString(spot->getSize())));
-        // Статус
+
         spotTable->setItem(spotRow, 2, new QTableWidgetItem(spot->getStatus() ? "Занято" : "Свободно"));
-        // Номер авто
+
         spotTable->setItem(spotRow, 3, new QTableWidgetItem(spot->getVehicle() ? QString::fromStdString(spot->getVehicle()->getLicensePlate()) : "Нет"));
 
         spotRow++;
     }
+}
+
+
+void MainWindow::exportData() {
+    QStringList formats = {"JSON", "XML", "XLSX", "DOCX"};
+    bool ok;
+    QString format = QInputDialog::getItem(this, "Выберите формат", "Формат файла:", formats, 0, false, &ok);
+
+    if (!ok || format.isEmpty()) return;
+
+    FilterCriteria criteria = getFilterCriteriaFromUI();
+
+    QString filePath = QFileDialog::getSaveFileName(this, "Сохранить файл", "",
+        format == "JSON" ? "JSON files (*.json)" :
+        format == "XML" ? "XML files (*.xml)" :
+        format == "XLSX" ? "Excel files (*.xlsx)" :
+        format == "DOCX" ? "Word files (*.docx)" : "All files (*.*)");
+
+    if (filePath.isEmpty()) return;
+
+    try {
+        if (criteria.type == "Автомобили") {
+            exportManager.exportVehicles(format, filePath, parkingLot->getVehicles(), criteria);
+        } else if (criteria.type == "Парковочные места") {
+            exportManager.exportParkingSpots(format, filePath, parkingLot->getSpots(), criteria);
+        }
+        QMessageBox::information(this, "Успех", "Отчет успешно сохранен.");
+    } catch (const std::exception &e) {
+        QMessageBox::critical(this, "Ошибка", e.what());
+    }
+}
+
+FilterCriteria MainWindow::getFilterCriteriaFromUI() {
+    // Реализуйте интерфейс для выбора фильтров (например, через QInputDialog или отдельное окно)
+    FilterCriteria criteria;
+    criteria.type = QInputDialog::getItem(this, "Выбор данных", "Что экспортировать:", {"Автомобили", "Парковочные места"});
+    if (criteria.type == "Автомобили") {
+        criteria.includeFreeVehicles = QMessageBox::question(this, "Фильтр", "Включить свободные автомобили?") == QMessageBox::Yes;
+        criteria.includeParkedVehicles = QMessageBox::question(this, "Фильтр", "Включить запаркованные автомобили?") == QMessageBox::Yes;
+    } else if (criteria.type == "Парковочные места") {
+        criteria.isOccupied = QMessageBox::question(this, "Фильтр", "Только занятые места?") == QMessageBox::Yes;
+        criteria.numberFrom = QInputDialog::getInt(this, "Фильтр", "Номер места от:", 1, 1, 10000);
+        criteria.numberTo = QInputDialog::getInt(this, "Фильтр", "Номер места до:", 1, 1, 10000);
+        criteria.size = QInputDialog::getText(this, "Фильтр", "Размер парковочного места:");
+    }
+    return criteria;
+}
+
+
+void MainWindow::setupUI() {
+    auto *layout = new QVBoxLayout;
+
+    auto *centralWidget = new QWidget(this);
+    centralWidget->setLayout(layout);
+    setCentralWidget(centralWidget);
+
+    // Подключаем кнопку к слоту
+    connect(exportButton, &QPushButton::clicked, this, &MainWindow::exportData);
 }
 

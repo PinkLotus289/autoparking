@@ -3,8 +3,8 @@
 #include <QMessageBox>
 #include <QLabel>
 #include <QHeaderView>
-#include <QInputDialog> // Для QInputDialog
-#include <QLineEdit>    // Для QLineEdit
+#include <QInputDialog> 
+#include <QLineEdit>    
 
 LoginWindow::LoginWindow(QWidget *parent)
     : QWidget(parent), dbManager("../parking_lot.db") {
@@ -12,7 +12,7 @@ LoginWindow::LoginWindow(QWidget *parent)
     parkingLot = std::make_unique<ParkingLot>("Центральная парковка", dbManager);
 
     setWindowTitle("Вход в систему");
-    setFixedSize(600, 400);
+    setFixedSize(800, 600);
 
     auto *layout = new QVBoxLayout(this);
 
@@ -25,14 +25,14 @@ LoginWindow::LoginWindow(QWidget *parent)
     layout->addWidget(adminButton);
     layout->addWidget(userButton);
 
-    // Таблица для отображения информации
+   
     infoTable = new QTableWidget(this);
-    infoTable->hide(); // Скрыто по умолчанию
+    infoTable->hide();
     layout->addWidget(infoTable);
 
-    setupTable(); // Настройка таблицы
+    setupTable(); 
 
-    // Связывание кнопок с действиями
+
     connect(adminButton, &QPushButton::clicked, this, &LoginWindow::openAdminPanel);
     connect(userButton, &QPushButton::clicked, this, &LoginWindow::openUserView);
 }
@@ -40,14 +40,14 @@ LoginWindow::LoginWindow(QWidget *parent)
 void LoginWindow::setupTable() {
     infoTable->setColumnCount(4);
     infoTable->setHorizontalHeaderLabels({"Номер места", "Размер", "Статус", "Транспорт"});
-    infoTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch); // Растягивать столбцы
+    infoTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch); 
 }
 
 void LoginWindow::openAdminPanel() {
     bool ok;
     QString password = QInputDialog::getText(this, "Вход для администратора",
                                              "Введите пароль:",
-                                             QLineEdit::Password, // Указание типа ввода
+                                             QLineEdit::Password, 
                                              "", &ok);
     if (ok && !password.isEmpty()) {
         if (password == adminPassword) {
@@ -58,7 +58,7 @@ void LoginWindow::openAdminPanel() {
             connect(mainWindow, &MainWindow::returnToLogin, this, &LoginWindow::show);
 
             mainWindow->show();
-            hide(); // Скрываем LoginWindow, но не закрываем его
+            hide(); 
         } else {
             QMessageBox::warning(this, "Ошибка", "Неверный пароль!");
         }
@@ -66,63 +66,31 @@ void LoginWindow::openAdminPanel() {
 }
 
 void LoginWindow::openUserView() {
-    /*
-    infoTable->setRowCount(0); // Очистить таблицу перед заполнением
 
-    int row = 0;
-
-    double freePercentage = calculateFreeSpotPercentage(*parkingLot);
-    infoTable->insertRow(row);
-    infoTable->setItem(row, 0, new QTableWidgetItem("Процент свободных мест:"));
-    infoTable->setItem(row, 1, new QTableWidgetItem(QString::number(freePercentage, 'f', 2) + " %"));
-    infoTable->setSpan(row, 1, 1, 3); // Объединяем ячейки для текста
-    row++;
-
-    for (const auto &spot : parkingLot->getSpots()) {
-        infoTable->insertRow(row);
-
-        infoTable->setItem(row, 0, new QTableWidgetItem(QString::number(spot->getNumber())));
-        infoTable->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(spot->getSize())));
-        infoTable->setItem(row, 2, new QTableWidgetItem(spot->getStatus() ? "Занято" : "Свободно"));
-        infoTable->setItem(row, 3, new QTableWidgetItem(spot->getVehicle() ? 
-                                                        QString::fromStdString(spot->getVehicle()->getLicensePlate()) : 
-                                                        "Нет"));
-        row++;
-    }
-    */
-
-    // Очистка таблицы парковочных мест
     infoTable->setRowCount(0);
 
     int row = 0;
 
-    // Сначала добавляем строку с процентом свободных мест
     double freePercentage = calculateFreeSpotPercentage(*parkingLot);
     infoTable->insertRow(row);
     infoTable->setItem(row, 0, new QTableWidgetItem("Процент свободных мест:"));
     infoTable->setItem(row, 1, new QTableWidgetItem(QString::number(freePercentage, 'f', 2) + " %"));
-    infoTable->setSpan(row, 1, 1, 3); // Объединяем ячейки для текста
+    infoTable->setSpan(row, 1, 1, 3); 
     row++;
 
-    // Затем выводим список свободных мест
     for (const auto &spot : parkingLot->getSpots()) {
-        if (!spot->getStatus()) { // Условие: только свободные места
+        if (!spot->getStatus()) { 
             infoTable->insertRow(row);
 
-            // Номер места
             infoTable->setItem(row, 0, new QTableWidgetItem(QString::number(spot->getNumber())));
-            // Размер
             infoTable->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(spot->getSize())));
-            // Статус
             infoTable->setItem(row, 2, new QTableWidgetItem("Свободно"));
-            // Номер авто (для свободных мест всегда "Нет")
             infoTable->setItem(row, 3, new QTableWidgetItem("Нет"));
 
             row++;
         }
     }
 
-    // Показать таблицу и кнопку возврата, скрыть остальные кнопки
     adminButton->hide();
     userButton->hide();
     infoTable->show();
@@ -135,18 +103,16 @@ void LoginWindow::openUserView() {
 }
 
 void LoginWindow::returnToMenu() {
-    // Очистить таблицу
+
     infoTable->setRowCount(0);
     infoTable->hide();
 
-    // Удалить кнопку возврата, если она есть
     auto *returnButton = findChild<QPushButton *>("returnButton");
     if (returnButton) {
         layout()->removeWidget(returnButton);
         delete returnButton;
     }
 
-    // Показать кнопки для выбора действий
     adminButton->show();
     userButton->show();
 }
