@@ -6,9 +6,17 @@
 #include <QTextEdit>
 #include <QInputDialog>
 #include <QLineEdit>
+#include <QComboBox>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QHeaderView>
 #include <QDateTime>
 #include <QFileDialog>
+#include <QCheckBox>
+#include <QSpinBox>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 #include <iostream>
 #include <memory>
 #include "../Header/Car.hpp"
@@ -307,7 +315,6 @@ void MainWindow::removeVehicle() {
 }
 
 
-
 void MainWindow::releaseParkingSpot() {
     try {
         int spotNumber = InputValidator::getValidatedSpotNumber(this, 1, 10000);
@@ -468,28 +475,17 @@ void MainWindow::displayParkingInfoAdmin() {
 
 
 void MainWindow::exportData() {
-    QStringList formats = {"JSON", "XML", "XLSX", "DOCX"};
-    bool ok;
-    QString format = QInputDialog::getItem(this, "Выберите формат", "Формат файла:", formats, 0, false, &ok);
+    QString filePath = QFileDialog::getSaveFileName(this, "Сохранить отчет", "", "JSON files (*.json)");
 
-    if (!ok || format.isEmpty()) return;
+    if (filePath.isEmpty()) {
+        QMessageBox::warning(this, "Ошибка", "Путь для сохранения файла не указан.");
+        return;
+    }
 
     FilterCriteria criteria = getFilterCriteriaFromUI();
 
-    QString filePath = QFileDialog::getSaveFileName(this, "Сохранить файл", "",
-        format == "JSON" ? "JSON files (*.json)" :
-        format == "XML" ? "XML files (*.xml)" :
-        format == "XLSX" ? "Excel files (*.xlsx)" :
-        format == "DOCX" ? "Word files (*.docx)" : "All files (*.*)");
-
-    if (filePath.isEmpty()) return;
-
     try {
-        if (criteria.type == "Автомобили") {
-            exportManager.exportVehicles(format, filePath, parkingLot->getVehicles(), criteria);
-        } else if (criteria.type == "Парковочные места") {
-            exportManager.exportParkingSpots(format, filePath, parkingLot->getSpots(), criteria);
-        }
+        ExportManager::exportData(filePath, parkingLot->getVehicles(), parkingLot->getSpots(), criteria);
         QMessageBox::information(this, "Успех", "Отчет успешно сохранен.");
     } catch (const std::exception &e) {
         QMessageBox::critical(this, "Ошибка", e.what());
@@ -497,18 +493,53 @@ void MainWindow::exportData() {
 }
 
 FilterCriteria MainWindow::getFilterCriteriaFromUI() {
-    // Реализуйте интерфейс для выбора фильтров (например, через QInputDialog или отдельное окно)
     FilterCriteria criteria;
-    criteria.type = QInputDialog::getItem(this, "Выбор данных", "Что экспортировать:", {"Автомобили", "Парковочные места"});
-    if (criteria.type == "Автомобили") {
-        criteria.includeFreeVehicles = QMessageBox::question(this, "Фильтр", "Включить свободные автомобили?") == QMessageBox::Yes;
-        criteria.includeParkedVehicles = QMessageBox::question(this, "Фильтр", "Включить запаркованные автомобили?") == QMessageBox::Yes;
-    } else if (criteria.type == "Парковочные места") {
-        criteria.isOccupied = QMessageBox::question(this, "Фильтр", "Только занятые места?") == QMessageBox::Yes;
-        criteria.numberFrom = QInputDialog::getInt(this, "Фильтр", "Номер места от:", 1, 1, 10000);
-        criteria.numberTo = QInputDialog::getInt(this, "Фильтр", "Номер места до:", 1, 1, 10000);
-        criteria.size = QInputDialog::getText(this, "Фильтр", "Размер парковочного места:");
+
+    QDialog dialog(this);
+    dialog.setWindowTitle("Настройка фильтров");
+    QVBoxLayout layout(&dialog);
+
+    QCheckBox includeFreeVehicles("Свободные автомобили", &dialog);
+    QCheckBox includeParkedVehicles("Запаркованные автомобили", &dialog);
+    QCheckBox includeFreeSpots("Свободные места", &dialog);
+    QCheckBox includeOccupiedSpots("Занятые места", &dialog);
+
+    QComboBox sizeComboBox(&dialog);
+    sizeComboBox.addItem("Любой");
+    sizeComboBox.addItem("Легковые");
+    sizeComboBox.addItem("Грузовые");
+
+    QSpinBox numberFrom(&dialog), numberTo(&dialog);
+    numberFrom.setRange(1, 10000);
+    numberTo.setRange(1, 10000);
+    numberTo.setValue(10000);
+
+    layout.addWidget(&includeFreeVehicles);
+    layout.addWidget(&includeParkedVehicles);
+    layout.addWidget(&includeFreeSpots);
+    layout.addWidget(&includeOccupiedSpots);
+    layout.addWidget(new QLabel("Размер мест:", &dialog));
+    layout.addWidget(&sizeComboBox);
+    layout.addWidget(new QLabel("Диапазон номеров:", &dialog));
+    layout.addWidget(&numberFrom);
+    layout.addWidget(&numberTo);
+
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    layout.addWidget(&buttonBox);
+
+    connect(&buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(&buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+
+    if (dialog.exec() == QDialog::Accepted) {
+        criteria.includeFreeVehicles = includeFreeVehicles.isChecked();
+        criteria.includeParkedVehicles = includeParkedVehicles.isChecked();
+        criteria.includeFreeSpots = includeFreeSpots.isChecked();
+        criteria.includeOccupiedSpots = includeOccupiedSpots.isChecked();
+        criteria.size = sizeComboBox.currentText() == "Любой" ? "" : sizeComboBox.currentText();
+        criteria.numberFrom = numberFrom.value();
+        criteria.numberTo = numberTo.value();
     }
+
     return criteria;
 }
 
@@ -520,7 +551,6 @@ void MainWindow::setupUI() {
     centralWidget->setLayout(layout);
     setCentralWidget(centralWidget);
 
-    // Подключаем кнопку к слоту
     connect(exportButton, &QPushButton::clicked, this, &MainWindow::exportData);
 }
 

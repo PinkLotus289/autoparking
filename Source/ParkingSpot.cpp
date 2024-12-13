@@ -37,16 +37,15 @@ void ParkingSpot::display() const {
 bool ParkingSpot::operator==(const ParkingSpot& other) const {
     return this->number == other.number && this->size == other.size;
 }
-/*
-void ParkingSpot::setParkingTime(const std::string& time) {
-    parkingTime = time;
-}*/
 
 void ParkingSpot::setParkingTime(const std::optional<std::string>& time) {
     parkingTime = time;
 }
 
-
 std::optional<std::string> ParkingSpot::getParkingTime() const {
     return parkingTime;
+}
+
+void ParkingSpot::clearParkingTime() {
+    parkingTime.reset();
 }

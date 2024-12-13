@@ -295,12 +295,14 @@ void ParkingLot::assignVehicleToSpot(const std::string& licensePlate, int spotNu
     auto& vehicle = *vehicleIt;
 
     spot->assignVehicle(vehicle);
+    spot->setParkingTime(parkingTime.empty() ? 
+        QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss").toStdString() : parkingTime);
     vehicle->setParked(true);
 
     std::string updateSpotQuery = std::format(
         "UPDATE ParkingSpots SET occupied = 1, vehicleId = '{}', parkingTime = '{}' WHERE number = {};",
         licensePlate,
-        parkingTime.empty() ? QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss").toStdString() : parkingTime,
+        spot->getParkingTime().value(),
         spotNumber
     );
 
@@ -319,8 +321,8 @@ void ParkingLot::assignVehicleToSpot(const std::string& licensePlate, int spotNu
 }
 
 
+
 void ParkingLot::releaseParkingSpot(int spotNumber) {
-    
     auto spotIt = std::find_if(spots.begin(), spots.end(),
         [spotNumber](const std::shared_ptr<ParkingSpot>& spot) {
             return spot->getNumber() == spotNumber;
@@ -359,7 +361,6 @@ void ParkingLot::releaseParkingSpot(int spotNumber) {
     }
 
     double durationInHours = static_cast<double>(durationInSeconds) / 3600.0; 
-    //const double hourlyRate = 100.0; 
     double totalCost = durationInHours * hourlyRate;
 
     auto vehicle = spot->getVehicle();
@@ -377,6 +378,7 @@ void ParkingLot::releaseParkingSpot(int spotNumber) {
     }
 
     spot->removeVehicle();
+    spot->clearParkingTime();
 
     std::string updateSpotQuery = std::format(
         "UPDATE ParkingSpots SET occupied = 0, vehicleId = NULL, parkingTime = NULL WHERE number = {};",
@@ -394,6 +396,7 @@ void ParkingLot::releaseParkingSpot(int spotNumber) {
 
     std::cout << "Парковочное место номер " << spotNumber << " успешно освобождено." << std::endl;
 }
+
 
 
 ParkingSpot* ParkingLot::getParkingSpot(int spotNumber) {
