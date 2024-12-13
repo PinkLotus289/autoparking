@@ -5,8 +5,13 @@
 #include <QRegularExpression>
 #include <QMessageBox>
 #include <QDateTime>
-#include <stdexcept>
 #include <QInputDialog>
+#include "../Exceptions/ValidationError.hpp"
+#include "../Exceptions/InvalidTimeFormatError.hpp"
+#include "../Exceptions/InvalidLicensePlateError.hpp"
+#include "../Exceptions/InputCancelledError.hpp"
+#include "../Exceptions/DuplicateVehicleError.hpp"
+#include "../Exceptions/InvalidSpotNumberError.hpp"
 
 class InputValidator {
 public:
@@ -19,12 +24,12 @@ public:
 
     static QDateTime parseTime(const QString& time) {
         if (!isValidTimeFormat(time)) {
-            throw std::invalid_argument("Неверный формат времени. Ожидаемый формат: YYYY-MM-DD HH:mm:ss");
+            throw InvalidTimeFormatError();
         }
 
         QDateTime dateTime = QDateTime::fromString(time, "yyyy-MM-dd HH:mm:ss");
         if (!dateTime.isValid()) {
-            throw std::invalid_argument("Ошибка преобразования строки в QDateTime.");
+            throw ValidationError("Ошибка преобразования строки в QDateTime.");
         }
 
         return dateTime;
@@ -45,13 +50,13 @@ public:
             );
 
             if (!ok) {
-                return ""; 
+                throw InputCancelledError();
             }
 
             try {
                 parseTime(inputTime);
                 return inputTime;
-            } catch (const std::invalid_argument& e) {
+            } catch (const ValidationError& e) {
                 QMessageBox::warning(parent, "Ошибка", e.what());
             }
         } while (true);
@@ -67,20 +72,20 @@ public:
                 "Ввод номера парковочного места",
                 QString("Введите номер парковочного места (%1 - %2):").arg(min).arg(max),
                 min,
-                min, 
-                max, 
-                1,   
+                min,
+                max,
+                1,
                 &ok
             );
 
             if (!ok) {
-                throw std::runtime_error("Ввод отменён пользователем.");
+                throw InputCancelledError();
             }
 
             if (spotNumber >= min && spotNumber <= max) {
-                return spotNumber; 
+                return spotNumber;
             } else {
-                QMessageBox::warning(parent, "Ошибка", "Номер парковочного места вне допустимого диапазона.");
+                throw InvalidSpotNumberError();
             }
         } while (true);
     }
@@ -105,13 +110,13 @@ public:
             );
 
             if (!ok) {
-                throw std::runtime_error("Ввод номерного знака отменён пользователем.");
+                throw InputCancelledError();
             }
 
             if (isValidLicensePlate(licensePlate)) {
-                return licensePlate; 
+                return licensePlate;
             } else {
-                QMessageBox::warning(parent, "Ошибка", "Неверный формат номерного знака. Ожидаемый формат: 1234ГС-5.");
+                throw InvalidLicensePlateError();
             }
         } while (true);
     }
@@ -119,12 +124,11 @@ public:
     static bool isVehicleInMemory(const std::string& licensePlate, const std::vector<std::shared_ptr<Vehicle>>& vehicles) {
         for (const auto& vehicle : vehicles) {
             if (vehicle->getLicensePlate() == licensePlate) {
-                return true; 
+                throw DuplicateVehicleError();
             }
         }
         return false;
     }
-
 };
 
-#endif 
+#endif // INPUTVALIDATOR_HPP

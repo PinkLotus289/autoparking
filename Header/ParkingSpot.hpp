@@ -23,6 +23,7 @@ public:
 
     void setParkingTime(const std::optional<std::string>& time);
     std::optional<std::string> getParkingTime() const;
+    void clearParkingTime();
 
 private:
     int number;

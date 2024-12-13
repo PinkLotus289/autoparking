@@ -5,6 +5,14 @@
 #include <QTableWidget>
 #include <QTextEdit>
 #include <QPushButton>
+
+#include <QDialog>
+#include <QVBoxLayout>
+#include <QCheckBox>
+#include <QSpinBox>
+#include <QLineEdit>
+#include <QLabel>
+
 #include <memory>
 #include "ParkingLot.hpp"
 #include "DatabaseManager.hpp"
